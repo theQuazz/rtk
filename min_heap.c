@@ -4,6 +4,7 @@
 
 struct min_heap {
   CompareFunction comparator;
+  MemoryAllocator allocator;
   int size;
   int max;
   void **binary_tree;
@@ -15,6 +16,7 @@ MinHeap MinHeap_create(const int max, CompareFunction comparator, MemoryAllocato
   heap->size = 0;
   heap->max = max;
   heap->comparator = comparator;
+  heap->allocator = allocator;
   heap->binary_tree = allocator(max * sizeof(void *));
 
   return heap;
@@ -36,7 +38,7 @@ MemoryAllocator MinHeap_memory_allocator(MinHeap heap) {
   return heap->allocator;
 }
 
-bool MinHeap_insert(MinHeap heap, const void * element) {
+bool MinHeap_insert(MinHeap heap, void *element) {
   int curr_index   = heap->size;
   int parent_index = 0;
   void *curr       = NULL;

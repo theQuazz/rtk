@@ -1,17 +1,20 @@
+#include <string.h>
+
 #include "task.h"
-#include "minheap.h"
+#include "min_heap.h"
 
 const int TASK_MAX = 1000;
-const int NUM_TASK_STATES = EVENT_BLOCKED + 1;
 
 MinHeap tasks[NUM_TASK_STATES] = { NULL };
 Task current_task = NULL;
 
-int sign(const int x) {
+static int sign(const int x) {
   return (x > 0) - (x < 0);
 }
 
-enum Comparison compare_tasks(const Task a, const Task b) {
+enum Comparison compare_tasks(const void *_a, const void *_b) {
+  const Task a = (Task)_a;
+  const Task b = (Task)_b;
   return sign(a->priority - b->priority);
 }
 
@@ -30,35 +33,42 @@ int get_current_tid() {
   return current_task ? current_task->tid : 0;
 }
 
-Task Task_create(int priority, void (*code)(void)) {
-  Task task = tasks->allocator(sizeof struct task);
-
-  task->tid = assign_tid();
-  task->state = READY;
-  task->priority = priority;
-  task->parent_tid = get_current_tid();
-  task->sp = NULL; // get_new_sp();
-  task->spsr = NULL; // get_default_spsr();
-  task->return_value = 0;
-
-  Task_init(task);
-
-  schedule_task(task);
-
-  return task;
+void *allocator(size_t size) {
+  return NULL;
 }
 
 void Task_init(Task task) {
   return;
 }
 
-Task *get_next_scheduled_task(void) {
-  current_task = MinHeap_delete_min(tasks);
+Task Task_create(int priority, void (*code)(void)) {
+  Task task = allocator(sizeof(struct task));
+
+  struct task t = {
+    .tid = assign_tid(),
+    .state = READY,
+    .priority = priority,
+    .parent_tid = get_current_tid(),
+    .sp = NULL, // get_new_sp();
+    .spsr = 0, // get_default_spsr();
+    .return_value = 0,
+  };
+
+  memcpy(task, &t, sizeof(struct task));
+
+  Task_init(task);
+  schedule_task(task);
+
+  return task;
+}
+
+Task get_next_scheduled_task(void) {
+  current_task = MinHeap_delete_min(tasks[READY]);
   return current_task;
 }
 
-void *schedule_task(Task task) {
-  MinHeap_insert(tasks, task);
+void schedule_task(Task task) {
+  MinHeap_insert(tasks[READY], task);
 }
 
 void release_processor() {
@@ -66,6 +76,4 @@ void release_processor() {
 
   schedule_task(current_task);
   task = get_next_scheduled_task();
-
-  task->sp();
 }

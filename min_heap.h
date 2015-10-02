@@ -2,6 +2,7 @@
 #define __MIN_HEAP_H__
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 enum Comparison {
   LESS_THAN    = -1,
@@ -15,7 +16,7 @@ typedef void *(*MemoryAllocator)(size_t size);
 typedef struct min_heap *MinHeap; 
 
 MinHeap MinHeap_create(const int max, CompareFunction comparator, MemoryAllocator allocator);
-bool MinHeap_insert(MinHeap heap, const void * element);
+bool MinHeap_insert(MinHeap heap, void *element);
 void *MinHeap_delete_min(MinHeap heap);
 int MinHeap_size(MinHeap heap);
 int MinHeap_max_size(MinHeap heap);
