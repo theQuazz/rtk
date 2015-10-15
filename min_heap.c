@@ -4,22 +4,38 @@
 
 struct min_heap {
   CompareFunction comparator;
-  MemoryAllocator allocator;
   int size;
   int max;
   void **binary_tree;
 };
 
-MinHeap MinHeap_create(const int max, CompareFunction comparator, MemoryAllocator allocator) {
-  struct min_heap *heap = allocator(sizeof(struct min_heap));
+MinHeap MinHeap__create(void *mem, size_t size, CompareFunction comparator) {
+  MinHeap heap = mem;
 
-  heap->size = 0;
-  heap->max = max;
-  heap->comparator = comparator;
-  heap->allocator = allocator;
-  heap->binary_tree = allocator(max * sizeof(void *));
+  MinHeap_init(
+    heap,
+    (void *)((char *)mem + sizeof(*heap)),
+    (size - sizeof(*heap)) / sizeof(*heap->binary_tree),
+    comparator
+  );
 
   return heap;
+}
+
+MinHeap MinHeap__allocate_and_create(const int max, CompareFunction comparator, MemoryAllocator allocator) {
+  MinHeap heap;
+  size_t size = max * sizeof(*heap->binary_tree) + sizeof(*heap);
+  void *mem = allocator(size);
+  heap = MinHeap__create(mem, size, comparator);
+
+  return heap;
+}
+
+void MinHeap_init(MinHeap heap, void *tree_space, size_t length, CompareFunction comparator) {
+  heap->size = 0;
+  heap->max = length;
+  heap->binary_tree = tree_space;
+  heap->comparator = comparator;
 }
 
 int MinHeap_size(MinHeap heap) {
@@ -32,10 +48,6 @@ int MinHeap_max_size(MinHeap heap) {
 
 CompareFunction MinHeap_comparator(MinHeap heap) {
   return heap->comparator;
-}
-
-MemoryAllocator MinHeap_memory_allocator(MinHeap heap) {
-  return heap->allocator;
 }
 
 bool MinHeap_insert(MinHeap heap, void *element) {
@@ -105,3 +117,19 @@ void *MinHeap_delete_min(MinHeap heap) {
 
   return min;
 }
+
+#ifdef DEBUG
+#include <stdio.h>
+
+void MinHeap_inspect(MinHeap heap, void (*element_inspect_function)(void *element)) {
+  printf("#<MinHeap:%p @size=%d @max=%d @binary_tree={ ", (void*)heap, heap->size, heap->max);
+  for (int i = 0; i < heap->size; i++) {
+    void *el = heap->binary_tree[i];
+    printf("%d=>", i);
+    element_inspect_function(el);
+    if ( i < heap->size - 1) printf(", ");
+  }
+  printf(" }>");
+}
+
+#endif

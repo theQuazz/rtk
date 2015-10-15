@@ -1,32 +1,7 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
-#include <stdint.h>
-
-enum TaskState {
-  READY,
-  ACTIVE,
-  ZOMBIE,
-  SEND_BLOCKED,
-  RECEIVE_BLOCKED,
-  REPLY_BLOCKED,
-  EVENT_BLOCKED,
-  NUM_TASK_STATES,
-};
-
-extern const int TASK_MAX;
-
-struct task {
-  const int tid;
-  enum TaskState state;
-  int priority;
-  const int parent_tid;
-  void *sp;
-  uint32_t spsr;
-  int return_value;
-};
-
-typedef struct task *Task;
+#include "task.h"
 
 enum CreateError {
   ERR_INVALID_PRIORITY = -1,

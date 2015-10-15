@@ -1,0 +1,9 @@
+# executables
+rtk
+
+# vim
+.*.sw*
+
+# generated
+*.o
+*.d
