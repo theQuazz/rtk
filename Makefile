@@ -1,31 +1,34 @@
 EXECUTABLE=rtk
+TEST_EXECUTABLE=runtests
 
 CC=gcc
-CFLAGS=-c -Wall -Wextra -pedantic --std=c99
+CFLAGS=-Wall -Wextra -pedantic --std=c99 -MMD
 
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
 TESTSRCS=$(wildcard test/*.c)
 TESTOBJS=$(TESTSRCS:.c=.o)
+DEPENDS=$(SOURCES:.c=.d) $(TESTSRCS:.c=.d)
 
 build: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
-$(TESTS): $(TESTOBJS)
-	$(CC) $(LDFLAGS) $(TESTOBJS) -o $@
+$(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
+	$(CC) $(LDFLAGS) $(OBJECTS) $(TESTOBJS) -o $@
 
 .c.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-.PHONY: clean clean_vim test
+.PHONY: clean test
 
-test: $(TESTS)
-	./$(TESTS)
+test: CFLAGS += -DTEST -DDEBUG -g
+test: $(TESTSRCS) $(TEST_EXECUTABLE)
+	./$(TEST_EXECUTABLE)
+
+-include ${DEPENDS}
 
 clean:
-	$(RM) -rf $(OBJECTS) $(EXECUTABLE)
+	$(RM) ~* $(OBJECTS) $(TESTOBJS) $(EXECUTABLE) $(TEST_EXECUTABLE)
 
-clean_vim: 
-	find . \( -name ".*.un~" -o -name ".*.sw*" \) -exec $(RM) -rf {} \;
