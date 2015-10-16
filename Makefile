@@ -1,18 +1,19 @@
-EXECUTABLE=rtk
+ISO=rtk.iso
 TEST_EXECUTABLE=runtests
 
-CC=gcc
-CFLAGS=-Wall -Wextra -pedantic --std=c99 -MMD
+CC=i686-elf-gcc
+CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
+LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc
 
 SOURCES=$(wildcard *.c)
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS=$(SOURCES:.c=.o) boot.o
 TESTSRCS=$(wildcard test/*.c)
 TESTOBJS=$(TESTSRCS:.c=.o)
 DEPENDS=$(SOURCES:.c=.d) $(TESTSRCS:.c=.d)
 
-build: $(SOURCES) $(EXECUTABLE)
+build: $(SOURCES) $(ISO)
 
-$(EXECUTABLE): $(OBJECTS)
+$(ISO): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
 $(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
@@ -21,9 +22,13 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
+.s.o:
+	$(CC) $(CFLAGS) -o $@ -c $^
+
 .PHONY: clean test
 
-test: CFLAGS += -DTEST -DDEBUG -g
+test: CC=gcc
+test: CFLAGS=-Wall -Wextra -pedantic --std=c99 -MMD -DTEST -DDEBUG -g
 test: $(TESTSRCS) $(TEST_EXECUTABLE)
 	./$(TEST_EXECUTABLE)
 

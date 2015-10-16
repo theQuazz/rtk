@@ -8,4 +8,5 @@ int main(void) {
   rtk_init();
   rtk_launch();
 #endif
+  return 0;
 }

@@ -2,6 +2,7 @@
 #define __MIN_HEAP_H__
 
 #include <stdbool.h>
+#include <stddef.h>
 
 enum Comparison {
   LESS_THAN    = -1,

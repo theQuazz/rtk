@@ -1,9 +1,7 @@
-#include <string.h>
-#include <stdlib.h>
-
 #include "rtk.h"
 #include "task.h"
 #include "min_heap.h"
+#include "string.h"
 
 const int TASK_MAX = 1024;
 
@@ -35,7 +33,7 @@ int get_current_tid() {
 }
 
 void *allocator(size_t size) {
-  return malloc(size);
+  return (void *)0xF000;
 }
 
 Task get_next_scheduled_task(void) {
@@ -86,7 +84,7 @@ void release_processor() {
 
 void tasks_init(void) {
   for (int i = 0; i < NUM_TASK_STATES; i++) {
-    tasks[i] = MinHeap__allocate_and_create(TASK_MAX, compare_tasks, malloc);
+    tasks[i] = MinHeap__allocate_and_create(TASK_MAX, compare_tasks, allocator);
   }
   current_task = null_task = Task_create(NULL_PRIORITY, null_process);
 }
