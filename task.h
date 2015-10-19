@@ -45,7 +45,7 @@ typedef struct task *Task;
 
 void tasks_init(void);
 
-Task Task_create(int priority, int stack_size, void (*code)(void));
+Task Task_create(int priority, void (*code)(void));
 
 void release_processor();
 

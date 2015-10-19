@@ -55,7 +55,7 @@ Task Task_create(int priority, void (*code)(void)) {
     .state = READY,
     .priority = priority,
     .parent_tid = get_current_tid(),
-    .sp = (long)stack + stack_size,
+    .sp = (long)stack + 0x400,
     .spsr = 0x10,
     .pc = (long)code,
     .return_value = 0,
