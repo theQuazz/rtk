@@ -2,13 +2,6 @@
 
 #include "min_heap.h"
 
-struct min_heap {
-  CompareFunction comparator;
-  int size;
-  int max;
-  void **binary_tree;
-};
-
 MinHeap MinHeap__create(void *mem, size_t size, CompareFunction comparator) {
   MinHeap heap = mem;
 
@@ -88,6 +81,8 @@ void *MinHeap_delete_min(MinHeap heap) {
   void *left_child     = NULL;
   void *right_child    = NULL;
   void *min_child      = NULL;
+
+  if (heap->size == 0) return NULL;
 
   heap->binary_tree[0] = heap->binary_tree[--heap->size];
   heap->binary_tree[heap->size] = NULL;

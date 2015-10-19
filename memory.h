@@ -4,5 +4,6 @@
 extern volatile void *main_memory;
 
 void memory_init(void);
+void *alloc_stack(void);
 
 #endif

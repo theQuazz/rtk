@@ -13,6 +13,12 @@ enum Comparison {
 typedef enum Comparison (*CompareFunction)(const void *, const void *);
 typedef void *(*MemoryAllocator)(size_t size);
 
+struct min_heap {
+  CompareFunction comparator;
+  int size;
+  int max;
+  void **binary_tree;
+};
 typedef struct min_heap *MinHeap; 
 
 // STATIC

@@ -2,10 +2,13 @@
 #include "task.h"
 #include "min_heap.h"
 #include "string.h"
+#include "asm.h"
+#include "memory.h"
+#include "mmio.h"
 
-const int TASK_MAX = 1024;
+struct min_heap tasks[NUM_TASK_STATES];
+void *min_heap_tree_space[NUM_TASK_STATES][TASK_MAX];
 
-MinHeap tasks[NUM_TASK_STATES] = { NULL };
 Task current_task = NULL;
 Task null_task = NULL;
 
@@ -20,7 +23,11 @@ enum Comparison compare_tasks(const void *_a, const void *_b) {
 }
 
 static void null_process(void) {
-  for ( ;; ) {}
+  for ( ;; ) {
+    uart_puts("null...\n");
+    for (int i = 0; i < 100000000; i++) {}
+    syscall();
+  }
 }
 
 int assign_tid() {
@@ -32,32 +39,29 @@ int get_current_tid() {
   return current_task ? current_task->tid : 0;
 }
 
-void *allocator(size_t size) {
-  return (void *)0xF000;
-}
-
 Task get_next_scheduled_task(void) {
-  current_task = MinHeap_delete_min(tasks[READY]);
-  return current_task;
+  return MinHeap_delete_min(&tasks[READY]);
 }
 
 void schedule_task(Task task) {
-  MinHeap_insert(tasks[READY], task);
+  MinHeap_insert(&tasks[READY], task);
 }
 
 Task Task_create(int priority, void (*code)(void)) {
-  Task task = allocator(sizeof(struct task));
+  void *stack = alloc_stack();
 
   struct task t = {
     .tid = assign_tid(),
     .state = READY,
     .priority = priority,
     .parent_tid = get_current_tid(),
-    .sp = NULL, // get_new_sp();
-    .spsr = 0, // get_default_spsr();
+    .sp = (long)stack + stack_size,
+    .spsr = 0x10,
+    .pc = (long)code,
     .return_value = 0,
-    .run = code,
   };
+
+  Task task = stack;
 
   memcpy(task, &t, sizeof(struct task));
 
@@ -66,25 +70,30 @@ Task Task_create(int priority, void (*code)(void)) {
   return task;
 }
 
-void release_processor() {
-  Task task = NULL;
+void save_task_state(uint32_t spsr, uint32_t sp, uint32_t pc) {
+	current_task->spsr = spsr;
+	current_task->sp = sp;
+	current_task->pc = pc;
+}
 
-  if (current_task->tid != NULL_TID) {
+void release_processor() {
+  if (current_task && current_task != null_task) {
     schedule_task(current_task);
   }
 
-  task = get_next_scheduled_task();
+  current_task = get_next_scheduled_task();
 
-  if (!task) {
-    task = null_task;
+  if (!current_task) {
+    current_task = null_task;
   }
 
-  task->run();
+  activate(current_task->spsr, current_task->sp, current_task->pc);
 }
 
 void tasks_init(void) {
   for (int i = 0; i < NUM_TASK_STATES; i++) {
-    tasks[i] = MinHeap__allocate_and_create(TASK_MAX, compare_tasks, allocator);
+    MinHeap_init(&tasks[i], &min_heap_tree_space[i], TASK_MAX, compare_tasks);
   }
-  current_task = null_task = Task_create(NULL_PRIORITY, null_process);
+
+  null_task = Task_create(NULL_PRIORITY, null_process);
 }

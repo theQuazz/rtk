@@ -5,6 +5,13 @@
 #include <stdlib.h>
 #endif
 
+enum {
+  STACK_SIZE = 0x400,
+  NUM_STACKS = 100,
+};
+
+char stacks[NUM_STACKS][STACK_SIZE];
+
 volatile void *main_memory;
 
 void memory_init(void) {
@@ -13,4 +20,9 @@ void memory_init(void) {
 #else
   main_memory = NULL;
 #endif
+}
+
+void *alloc_stack() {
+  static int curr_stack = 0;
+  return stacks[curr_stack++];
 }

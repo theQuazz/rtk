@@ -11,6 +11,14 @@ enum Tids {
   NULL_TID = 0,
 };
 
+enum {
+  DEFAULT_STACK_SIZE = 0x200,
+};
+
+enum {
+  TASK_MAX = 1024,
+};
+
 enum TaskState {
   READY,
   ACTIVE,
@@ -22,24 +30,22 @@ enum TaskState {
   NUM_TASK_STATES,
 };
 
-extern const int TASK_MAX;
-
 struct task {
   const int tid;
   enum TaskState state;
   int priority;
   const int parent_tid;
-  void *sp;
+  uint32_t sp;
   uint32_t spsr;
-  int return_value;
-  void (*run)(void);
+  uint32_t pc;
+  uint32_t return_value;
 };
 
 typedef struct task *Task;
 
 void tasks_init(void);
 
-Task Task_create(int priority, void (*code)(void));
+Task Task_create(int priority, int stack_size, void (*code)(void));
 
 void release_processor();
 

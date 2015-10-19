@@ -1,29 +1,39 @@
-ISO=rtk.iso
+ELF=rtk.elf
+BIN=rtk.bin
 TEST_EXECUTABLE=runtests
 
-CC=i686-elf-gcc
-CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
-LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc
+CC=arm-none-eabi-gcc
+CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm
+LD=arm-none-eabi-ld
+LDFLAGS=-N -Ttext=0x10000
 
 SOURCES=$(wildcard *.c)
-OBJECTS=$(SOURCES:.c=.o) boot.o
+ASM=$(wildcard *.s)
+OBJECTS=$(SOURCES:.c=.o) $(ASM:.s=.o)
 TESTSRCS=$(wildcard test/*.c)
 TESTOBJS=$(TESTSRCS:.c=.o)
 DEPENDS=$(SOURCES:.c=.d) $(TESTSRCS:.c=.d)
 
-build: $(SOURCES) $(ISO)
+build: $(SOURCES) $(ELF)
 
-$(ISO): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+$(ELF): $(OBJECTS)
+
+$(BIN): $(ELF)
+	arm-none-eabi-objcopy $(ELF) -O binary $(BIN)
 
 $(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(TESTOBJS) -o $@
+
+.SUFFIXES: .o .elf
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .s.o:
 	$(CC) $(CFLAGS) -o $@ -c $^
+
+.o.elf:
+	$(LD) $(LDFLAGS) -o $@ $^
 
 .PHONY: clean test
 

@@ -7,7 +7,12 @@ size_t strlen(const char *str) {
 }
 
 void *memcpy(void *dest, void *src, size_t num) {
-  char *d = dest, *s = src;
-  while (--num >= 0) d[num] = s[num];
+  char* dst8 = (char*)dest;
+  char* src8 = (char*)src;
+
+  while (num--) {
+    *dst8++ = *src8++;
+  }
+
   return dest;
 }
