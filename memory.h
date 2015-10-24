@@ -1,7 +1,10 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
-extern volatile void *main_memory;
+enum {
+  STACK_SIZE = 0x400,
+  NUM_STACKS = 100,
+};
 
 void memory_init(void);
 void *alloc_stack(void);

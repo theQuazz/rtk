@@ -34,10 +34,6 @@ int MinHeap_max_size(MinHeap heap);
 CompareFunction MinHeap_comparator(MinHeap heap);
 MemoryAllocator MinHeap_memory_allocator(MinHeap heap);
 
-#ifdef DEBUG
 void MinHeap_inspect(MinHeap heap, void (*element_inspect_function)(void *element));
-#else
-#define MinHeap_inspect(...)
-#endif
 
 #endif

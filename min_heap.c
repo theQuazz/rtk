@@ -1,6 +1,5 @@
-#include <stddef.h>
-
 #include "min_heap.h"
+#include "io.h"
 
 MinHeap MinHeap__create(void *mem, size_t size, CompareFunction comparator) {
   MinHeap heap = mem;
@@ -113,11 +112,8 @@ void *MinHeap_delete_min(MinHeap heap) {
   return min;
 }
 
-#ifdef DEBUG
-#include <stdio.h>
-
 void MinHeap_inspect(MinHeap heap, void (*element_inspect_function)(void *element)) {
-  printf("#<MinHeap:%p @size=%d @max=%d @binary_tree={ ", (void*)heap, heap->size, heap->max);
+  printf("#<MinHeap:%d @size=%d @max=%d @binary_tree={ ", (void*)heap, heap->size, heap->max);
   for (int i = 0; i < heap->size; i++) {
     void *el = heap->binary_tree[i];
     printf("%d=>", i);
@@ -127,4 +123,3 @@ void MinHeap_inspect(MinHeap heap, void (*element_inspect_function)(void *elemen
   printf(" }>");
 }
 
-#endif

@@ -4,8 +4,8 @@ TEST_EXECUTABLE=runtests
 
 CC=arm-none-eabi-gcc
 CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm
-LD=arm-none-eabi-ld
-LDFLAGS=-N -Ttext=0x10000
+LD=arm-none-eabi-gcc
+LDFLAGS=-N -Ttext=0x10000 -nostartfiles -nostdlib -L$(HOME)/opt/cross/lib/gcc/arm-none-eabi/5.2.0 -lgcc
 
 SOURCES=$(wildcard *.c)
 ASM=$(wildcard *.s)

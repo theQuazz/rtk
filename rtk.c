@@ -45,12 +45,12 @@ void user4(void) {
 }
 
 void rtk_init(void) {
+  //uart_init();
   uart_puts("Kernel starting...\n");
   memory_init();
   uart_puts("memory initialized...\n");
   tasks_init();
   uart_puts("tasks initialized...\n");
-  //uart_init();
 }
 
 void rtk_launch(void) {

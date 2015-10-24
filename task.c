@@ -5,6 +5,7 @@
 #include "asm.h"
 #include "memory.h"
 #include "mmio.h"
+#include "io.h"
 
 struct min_heap tasks[NUM_TASK_STATES];
 void *min_heap_tree_space[NUM_TASK_STATES][TASK_MAX];
@@ -16,10 +17,17 @@ static int sign(const int x) {
   return (x > 0) - (x < 0);
 }
 
+static void Task_inspect(void *_t) {
+  Task t = _t;
+  printf("#<Task:%d @tid=%d @priority=%d @scheduled_at=%d>", t, t->tid, t->priority, t->scheduled_at);
+}
+
 enum Comparison compare_tasks(const void *_a, const void *_b) {
   const Task a = (Task)_a;
   const Task b = (Task)_b;
-  return sign(a->priority - b->priority);
+  return a->priority == b->priority ?
+    sign(a->scheduled_at - b->scheduled_at) :
+    sign(a->priority - b->priority);
 }
 
 static void null_process(void) {
@@ -32,11 +40,16 @@ static void null_process(void) {
 
 int assign_tid() {
   static int tid = 0;
-  return ++tid;
+  return tid++;
 }
 
 int get_current_tid() {
   return current_task ? current_task->tid : 0;
+}
+
+int get_current_time() {
+  static volatile int fake_time = 0;
+  return fake_time++;
 }
 
 Task get_next_scheduled_task(void) {
@@ -44,6 +57,7 @@ Task get_next_scheduled_task(void) {
 }
 
 void schedule_task(Task task) {
+  task->scheduled_at = get_current_time();
   MinHeap_insert(&tasks[READY], task);
 }
 
@@ -55,7 +69,8 @@ Task Task_create(int priority, void (*code)(void)) {
     .state = READY,
     .priority = priority,
     .parent_tid = get_current_tid(),
-    .sp = (long)stack + 0x400,
+    .scheduled_at = get_current_time(),
+    .sp = (long)stack + STACK_SIZE - 14 * 4, // allow space for 14 registers (word size = 4 bytes) to be popped
     .spsr = 0x10,
     .pc = (long)code,
     .return_value = 0,
@@ -77,6 +92,7 @@ void save_task_state(uint32_t spsr, uint32_t sp, uint32_t pc) {
 }
 
 void release_processor() {
+
   if (current_task && current_task != null_task) {
     schedule_task(current_task);
   }

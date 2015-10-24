@@ -34,6 +34,7 @@ struct task {
   const int tid;
   enum TaskState state;
   int priority;
+  int scheduled_at;
   const int parent_tid;
   uint32_t sp;
   uint32_t spsr;
