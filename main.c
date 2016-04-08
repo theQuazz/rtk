@@ -1,4 +1,4 @@
-#include "rtk.h"
+#include "kernel/rtk.h"
 #include "test/test.h"
 
 int main(void) {

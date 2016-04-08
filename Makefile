@@ -3,12 +3,12 @@ BIN=rtk.bin
 TEST_EXECUTABLE=runtests
 
 CC=arm-none-eabi-gcc
-CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm
+CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm -fplan9-extensions
 LD=arm-none-eabi-gcc
-LDFLAGS=-N -Ttext=0x10000 -nostartfiles -nostdlib -L$(HOME)/opt/cross/lib/gcc/arm-none-eabi/5.2.0 -lgcc
+LDFLAGS=-N -Ttext=0x10000 -nostartfiles -nostdlib -L$(HOME)/arm-cs-tools/lib/gcc/arm-none-eabi/4.8.3 -lgcc
 
-SOURCES=$(wildcard *.c)
-ASM=$(wildcard *.s)
+SOURCES=$(wildcard ./kernel/*.c) $(wildcard ./lib/*.c) $(wildcard ./arch/arm/*.c) main.c
+ASM=$(wildcard ./arch/arm/*.s)
 OBJECTS=$(SOURCES:.c=.o) $(ASM:.s=.o)
 TESTSRCS=$(wildcard test/*.c)
 TESTOBJS=$(TESTSRCS:.c=.o)
@@ -32,7 +32,7 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
 .s.o:
 	$(CC) $(CFLAGS) -o $@ -c $^
 
-.o.elf:
+rtk.elf:
 	$(LD) $(LDFLAGS) -o $@ $^
 
 .PHONY: clean test

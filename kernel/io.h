@@ -1,5 +1,5 @@
-#ifndef __KERNEL_IO_H__
-#define __KERNEL_IO_H__
+#ifndef __IO_H__
+#define __IO_H__
 
 #include "common.h"
 

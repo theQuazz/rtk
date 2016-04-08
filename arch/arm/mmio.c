@@ -13,15 +13,6 @@ unsigned char uart_getc() {
   return mmio_read(UART0_DR);
 }
 
-void uart_write(const unsigned char* buffer, size_t size) {
-  for ( size_t i = 0; i < size; i++ )
-    uart_putc(buffer[i]);
-}
-
-void uart_puts(const char* str) {
-  uart_write((const unsigned char*) str, strlen(str));
-}
-
 void uart_init() {
   // Disable UART0.
   mmio_write(UART0_CR, 0x00000000);

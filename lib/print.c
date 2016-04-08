@@ -1,6 +1,6 @@
-#include "io.h"
-#include "mmio.h"
+#include "../arch/arm/mmio.h"
 
+/*
 static char* bf;
 static char buf[12];
 static unsigned int num;
@@ -11,12 +11,12 @@ static void out(char c) {
   *bf++ = c;
 }
 
-static void outDgt(char dgt) {
+static void out_dgt(char dgt) {
   out(dgt+(dgt<10 ? '0' : (uc ? 'A' : 'a')-10));
   zs=1;
 }
 
-static void divOut(unsigned int div) {
+static void div_out(unsigned int div) {
   unsigned char dgt=0;
   num &= 0xffff; // just for testing the code  with 32 bit ints
   while (num>=div) {
@@ -24,7 +24,7 @@ static void divOut(unsigned int div) {
     dgt++;
   }
   if (zs || dgt>0) 
-    outDgt(dgt);
+    out_dgt(dgt);
 } 
 
 void print(char *fmt, ...)
@@ -67,20 +67,20 @@ void print(char *fmt, ...)
             num = -(int)num;
             out('-');
           }
-          divOut(10000);
-          divOut(1000);
-          divOut(100);
-          divOut(10);
-          outDgt(num);
+          div_out(10000);
+          div_out(1000);
+          div_out(100);
+          div_out(10);
+          out_dgt(num);
           break;
         case 'x': 
         case 'X' : 
           uc= ch=='X';
           num=va_arg(va, unsigned int);
-          divOut(0x1000);
-          divOut(0x100);
-          divOut(0x10);
-          outDgt(num);
+          div_out(0x1000);
+          div_out(0x100);
+          div_out(0x10);
+          out_dgt(num);
           break;
         case 'c' : 
           out((char)(va_arg(va, int)));
@@ -107,3 +107,4 @@ abort:;
       va_end(va);
 }
 
+*/

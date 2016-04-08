@@ -1,5 +1,5 @@
-#ifndef __KERNEL_COMMON_H__
-#define __KERNEL_COMMON_H__
+#ifndef __COMMON_H__
+#define __COMMON_H__
 
 /** @brief Kernel wide success status code
  *
