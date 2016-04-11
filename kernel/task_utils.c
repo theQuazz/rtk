@@ -3,6 +3,7 @@
 #include "task_queue.h"
 #include "asm.h"
 #include "../lib/string.h"
+#include "../lib/print.h"
 #include "../arch/arm/mmio.h"
 
 struct task_queue_node task_descriptors[TASK_MAX];
@@ -16,6 +17,7 @@ const char stacks[STACK_SIZE][TASK_MAX];
 
 static void null_process( void ) {
   for ( ;; ) {
+    Print( 0, "Null process...\n" );
     syscall();
   }
 }
@@ -30,15 +32,15 @@ int get_current_tid() {
 }
 
 struct task *get_next_scheduled_task( void ) {
-  uart_putc('>');
-  uart_putc('>');
-  uart_putc('>');
-  uart_putc('\n');
   return dequeue_priority_task_queue( &scheduler.states[READY] );
 }
 
 void schedule_task( struct task *task ) {
   enqueue_stateful_priority_task_queue( &scheduler, ( struct task_queue_node* )task );
+}
+
+void Task_inspect( struct task *task ) {
+  Print( 0, "#<Task:%d tid=%d priority=%d spsr=%d sp=%d pc=%d>\n", task, task->tid, task->priority, task->spsr, task->sp, task->pc );
 }
 
 struct task *Task_create( int priority, void ( *code )( void ) ) {
@@ -62,6 +64,9 @@ struct task *Task_create( int priority, void ( *code )( void ) ) {
 
   schedule_task( task );
 
+  Print( 0, "Task_create( %d, %d ) from %d\n", priority, code, current_task->tid );
+  Task_inspect( task );
+
   return task;
 }
 
@@ -72,6 +77,9 @@ void save_task_state( uint32_t spsr, uint32_t sp, uint32_t pc ) {
 }
 
 void release_processor() {
+  Print( 0, "Release processor by %d...\n", current_task->tid );
+  for ( int j = 0; j < 600000000; j++ ) { j = j + 1; }
+
   if ( current_task && current_task != null_task ) {
     schedule_task( current_task );
   }
@@ -82,6 +90,8 @@ void release_processor() {
     current_task = null_task;
   }
 
+  Print( 0, "Switching to " );
+  Task_inspect( current_task );
   activate( current_task->spsr, current_task->sp, current_task->pc );
 }
 

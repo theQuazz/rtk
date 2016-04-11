@@ -34,7 +34,7 @@ enum Tids {
 };
 
 enum {
-  STACK_SIZE = 0x200,
+  STACK_SIZE = 0x2000,
 };
 
 enum {

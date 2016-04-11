@@ -1,6 +1,7 @@
-#include "../arch/arm/mmio.h"
+#include "./print.h"
 
-/*
+void Putc( int channel, char c );
+
 static char* bf;
 static char buf[12];
 static unsigned int num;
@@ -27,7 +28,7 @@ static void div_out(unsigned int div) {
     out_dgt(dgt);
 } 
 
-void print(char *fmt, ...)
+void Print( int channel, char *fmt, ...)
 {
   va_list va;
   char ch;
@@ -37,7 +38,7 @@ void print(char *fmt, ...)
 
   while ((ch=*(fmt++))) {
     if (ch!='%') {
-      uart_putc(ch);
+      Putc(channel, ch);
     }
     else {
       char lz=0;
@@ -98,13 +99,11 @@ void print(char *fmt, ...)
       while (*bf++ && w > 0)
         w--;
       while (w-- > 0) 
-        uart_putc(lz ? '0' : ' ');
+        Putc(channel, lz ? '0' : ' ');
       while ((ch= *p++))
-        uart_putc(ch);
+        Putc(channel, ch);
     }
   }
 abort:;
       va_end(va);
 }
-
-*/

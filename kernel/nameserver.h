@@ -3,6 +3,7 @@
 
 enum NameServerError {
   ERR_INVALID_NAMESERVER_TID = -1,
+  ERR_LOOKUP_FAILED = -2,
 };
 
 /** @brief Register a name with the name server
@@ -31,7 +32,7 @@ int RegisterAs( char *name );
  *  under the given name.
  *
  *  Whether WhoIs blocks waiting for a registration or returns with an error if
- *  no task is registered under the given name is implementation- dependent.
+ *  no task is registered under the given name is implementation-dependent.
  *
  *  There is guaranteed to be a unique task id associated with each registered
  *  name, but the registered task may change at any time after a call to WhoIs.

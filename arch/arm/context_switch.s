@@ -11,10 +11,17 @@ svc_entry:
 	mov lr, pc
 	ldr pc, =save_task_state
 
+  mov a1, r4
+  mov a2, r5
+  mov a3, r6
+  mov a4, r7
+  blx r12
+
 	pop {r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
 	mov sp, ip
 	bx lr
 
+.type activate %function
 .global activate
 activate:
 	/* Save kernel state */

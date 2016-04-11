@@ -7,7 +7,7 @@ CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -mar
 LD=arm-none-eabi-gcc
 LDFLAGS=-N -Ttext=0x10000 -nostartfiles -nostdlib -L$(HOME)/arm-cs-tools/lib/gcc/arm-none-eabi/4.8.3 -lgcc
 
-SOURCES=$(wildcard ./kernel/*.c) $(wildcard ./lib/*.c) $(wildcard ./arch/arm/*.c) main.c
+SOURCES=$(wildcard ./kernel/*.c) $(wildcard ./arch/arm/*.c) $(wildcard ./lib/*.c) $(wildcard ./usr/*.c) main.c
 ASM=$(wildcard ./arch/arm/*.s)
 OBJECTS=$(SOURCES:.c=.o) $(ASM:.s=.o)
 TESTSRCS=$(wildcard test/*.c)

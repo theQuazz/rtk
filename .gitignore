@@ -8,3 +8,5 @@ rtk
 *.o
 *.d
 *.iso
+*.elf
+*.bin

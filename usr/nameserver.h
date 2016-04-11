@@ -1,26 +1,36 @@
 #ifndef __NAMESERVER_PROC_H__
 #define __NAMESERVER_PROC_H__
 
+#include "../kernel/nameserver.h"
 #include "../kernel/communication.h"
 
 enum {
-  NAMESERVER_NAME_MAX_LEN = 128,
+  NS_NAME_BUFFER_SIZE = 128,
 };
 
 enum NameServerMsgType {
-  NS_WHO_IS,
   NS_REGISTER_AS,
+  NS_REGISTER_AS_REPLY,
+  NS_WHO_IS,
   NS_WHO_IS_REPLY,
 };
 
-struct NameServerIncomingMsg {
+struct NameServerRequest {
   struct BaseMsg;
-  const char name[NAMESERVER_NAME_MAX_LEN + 1];
+  char name[NS_NAME_BUFFER_SIZE];
 };
 
-struct NameServerResponseMsg {
+struct NameServerWhoIsResponse {
   struct BaseMsg;
+  const int status;
   const int whois_tid;
 };
+
+struct NameServerRegisterAsResponse {
+  struct BaseMsg;
+  const int status;
+};
+
+void NameServer( void );
 
 #endif

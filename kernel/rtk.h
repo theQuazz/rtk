@@ -1,8 +1,8 @@
 #ifndef __RTK_H__
 #define __RTK_H__
 
-void rtk_init(void);
+void RtkInit( void );
 
-void rtk_launch(void);
+void RtkLaunch( void );
 
 #endif

@@ -5,8 +5,8 @@ int main(void) {
 #ifdef TEST
   return run_test_suites();
 #else
-  rtk_init();
-  rtk_launch();
+  RtkInit();
+  RtkLaunch();
 #endif
   return 0;
 }

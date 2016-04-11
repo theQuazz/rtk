@@ -7,5 +7,6 @@
 #include "clockserver.h"
 #include "interrupt.h"
 #include "io.h"
+#include "asm.h"
 
 #endif

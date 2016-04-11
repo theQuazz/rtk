@@ -7,7 +7,7 @@
  *  type
  */
 struct BaseMsg {
-  const int type;
+  int type;
 };
 
 /** @brief Send a message
@@ -39,7 +39,7 @@ struct BaseMsg {
  *  @param replylen Length of sent message (bytes)
  *  @return The size of the message supplied by the replying task
  */
-int Send( int tid, char *msg, int msglen, char *reply, int replylen );
+int Send( int tid, void *msg, int msglen, void *reply, int replylen );
 enum SendError {
   ERR_SEND_IMPOSSIBLE_TID = -1,
   ERR_SEND_NONEXISTENT_TASK = -2,
@@ -66,7 +66,7 @@ enum SendError {
  *  @param msglen Size of the message buffer
  *  @return The size of the message sent
  */
-int Receive( int *tid, char *msg, int msglen );
+int Receive( int *tid, void *msg, int msglen );
 
 /** @brief Reply to a message
  *
@@ -81,7 +81,7 @@ int Receive( int *tid, char *msg, int msglen );
  *  @param replylen Length of body in bytes
  *  @return RETURN_STATUS_OK or ReplyError
  */
-int Reply( int tid, char *reply, int replylen );
+int Reply( int tid, void *reply, int replylen );
 enum ReplyError {
   ERR_REPLY_IMPOSSIBLE_TID = -1,
   ERR_REPLY_NONEXISTENT_TASK = -2,

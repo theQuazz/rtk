@@ -21,7 +21,7 @@
  *  @return Volatile data if positive integer else data is in buffer if
  *          RETURN_STATUS_OK else AwaitEventError
  */
-int AwaitEvent( int eventid, char *event, int eventlen );
+int AwaitEvent( int eventid, void *event, int eventlen );
 enum AwaitEventError {
   ERR_INVALID_EVENT = -1,
   ERR_CORRUPTED_DATA = -2,

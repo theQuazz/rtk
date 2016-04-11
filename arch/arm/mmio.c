@@ -1,5 +1,4 @@
 #include "mmio.h"
-#include "string.h"
 
 void uart_putc(unsigned char byte) {
   // Wait for UART to become ready to transmit.

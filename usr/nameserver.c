@@ -1,24 +1,37 @@
+#include "./nameserver.h"
 #include "../lib/hash.h"
+#include "../usr/nameserver.h"
 #include "../lib/hashtable.h"
 
 void NameServer() {
+  struct HashTable ht;
+
+  HashTableInitialize( &ht );
+
   for ( ;; ) {
-    const int *tid = -1;
-    struct NameServerIncomingMsg msg;
-    const int err = Receive( tid, &msg, sizeof( msg ) );
+    int tid = -1;
+    struct NameServerRequest msg;
+    const int err = Receive( &tid, &msg, sizeof( msg ) );
 
     switch ( err ) {
       default: {
         switch ( msg.type ) {
-          case NAME_SERVER_MSG_TYPE_WHO_IS: {
-            const int whois_tid = HashTableGet( Hash( msg.name ) );
-            struct NameServerWhoIsReplyMsg = { type: whois_tid };
+          case NS_WHO_IS: {
+            int whois_tid;
+            struct NameServerWhoIsResponse reply = {
+              type: NS_WHO_IS_REPLY,
+              status: HashTableGet( &ht, Hash( msg.name ), &whois_tid ),
+              whois_tid: whois_tid,
+            };
+            Reply( tid, &reply, sizeof( reply ) );
             break;
           }
-          case NAME_SERVER_MSG_TYPE_REGISTER_AS: {
-            HashTableInsert( Hash( msg.name ), *tid );
-            struct BaseMsg reply = { type: RETURN_STATUS_OK };
-            Reply( *tid, &reply, sizeof( reply ) );
+          case NS_REGISTER_AS: {
+            struct NameServerRegisterAsResponse reply = {
+              type: NS_REGISTER_AS_REPLY,
+              status: HashTableInsert( &ht, Hash( msg.name ), tid ),
+            };
+            Reply( tid, &reply, sizeof( reply ) );
             break;
           }
           default: break;

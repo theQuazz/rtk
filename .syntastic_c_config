@@ -1,0 +1,9 @@
+-std=gnu99
+-ffreestanding
+-O2
+-Wall
+-Wextra
+-mcpu=arm1176jzf-s
+-fpic
+-marm
+-fplan9-extensions

@@ -1,6 +1,6 @@
 #include "hash.h"
 
-unsigned long djb2( unsigned char *str ) {
+unsigned long djb2( const unsigned char *str ) {
   unsigned long hash = 5381;
   int c;
 
@@ -10,6 +10,6 @@ unsigned long djb2( unsigned char *str ) {
   return hash;
 }
 
-unsigned long hash( unsigned char *str ) {
-  return djb2(str);
+unsigned long Hash( const char *str ) {
+  return djb2( ( const unsigned char* )str );
 }
