@@ -5,7 +5,7 @@
 #include "../lib/string.h"
 #include "../lib/debug.h"
 
-static struct msg_queue_node nodes[TASK_MAX][TASK_MAX];
+static struct msg_queue_node nodes[TASK_MAX];
 static struct task_queue msg_queues[TASK_MAX];
 
 void InitCommunication( void ) {
@@ -40,7 +40,7 @@ int SendProxy( int tid, void *msg, int msglen, void *reply, int replylen ) {
   n.reply_buffer = reply;
   n.reply_buffer_size = replylen;
 
-  struct msg_queue_node *node = &nodes[tid][mytid];
+  struct msg_queue_node *node = &nodes[mytid];
 
   memcpy( node, &n, sizeof( n ) );
 
@@ -51,7 +51,7 @@ int SendProxy( int tid, void *msg, int msglen, void *reply, int replylen ) {
   if ( GetTaskState( tid ) == RECEIVE_BLOCKED ) {
     Debugln( "Task %d awaiting message, resuming", tid );
 
-    struct msg_queue_node *receiver_node = &nodes[tid][tid];
+    struct msg_queue_node *receiver_node = &nodes[tid];
 
     node->put_tid = receiver_node->put_tid;
     node->receive_buffer = receiver_node->receive_buffer;
@@ -78,7 +78,7 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
     n.receive_buffer = msg;
     n.receive_buffer_size = msglen;
 
-    memcpy( &nodes[mytid][mytid], &n, sizeof( n ) );
+    memcpy( &nodes[mytid], &n, sizeof( n ) );
 
     return RETURN_STATUS_OK;
   }
@@ -112,17 +112,16 @@ int CompleteReceive( int tid ) {
 int ReplyProxy( int tid, void *reply, int replylen ) {
   Debugln( "Replying to task %d", tid );
 
-  const int mytid = GetCurrentTid();
-  struct msg_queue_node *n = &nodes[mytid][tid];
+  struct msg_queue_node *n = &nodes[tid];
 
   if ( ! IsValidTid( tid ) ) {
     Debugln( "Invalid tid, aborting!" );
-    return ERR_SEND_IMPOSSIBLE_TID;
+    return ERR_REPLY_IMPOSSIBLE_TID;
   }
 
   if ( ! IsTaskAlive( tid ) ) {
     Debugln( "Non-existent tid, aborting!" );
-    return ERR_SEND_NONEXISTENT_TASK;
+    return ERR_REPLY_NONEXISTENT_TASK;
   }
 
   if ( GetTaskState( tid ) != REPLY_BLOCKED ) {
