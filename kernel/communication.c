@@ -78,15 +78,13 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
   n->receive_buffer = msg;
   n->receive_buffer_size = msglen;
 
-  CompleteReceive( mytid );
-
-  return RETURN_STATUS_OK;
+  return CompleteReceive( mytid );
 }
 
 int CompleteReceive( int tid ) {
   struct msg_queue_node *n = ( struct msg_queue_node* )DequeueTaskQueue( &msg_queues[tid] );
 
-  memcpy( n->reply_buffer, n->msg_buffer, n->reply_buffer_size );
+  memcpy( n->receive_buffer, n->msg_buffer, n->receive_buffer_size );
   *( n->put_tid ) = n->from_tid;
 
   SetTaskState( n->to_tid, READY );
@@ -112,7 +110,7 @@ int ReplyProxy( int tid, void *reply, int replylen ) {
     return ERR_NOT_REPLY_BLOCKED;
   }
 
-  memcpy( n->reply_buffer, reply, replylen );
+  memcpy( n->reply_buffer, reply, n->reply_buffer_size );
 
   SetTaskState( n->from_tid, READY );
   SetTaskReturnValue( n->from_tid, replylen );
