@@ -110,7 +110,7 @@ void SaveTaskState( uint32_t spsr, uint32_t *sp, uint32_t pc, uint32_t ret ) {
 	current_task->spsr = spsr;
 	current_task->sp = sp;
 	current_task->pc = pc;
-  *( current_task->sp ) = ret;
+  *( current_task->sp ) = ret; // TODO: find better way of storing return code?
 }
 
 void ScheduleAndActivate( void ) {

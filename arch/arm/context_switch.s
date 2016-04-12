@@ -1,22 +1,23 @@
 .global svc_entry
 svc_entry:
+  /* Call svc */
+	msr CPSR_c, #0xD3 /* Supervisor mode */
+  push {r4-r9}
+  blx r10
+  mov a4, r0
+  pop {r4-r9}
+
 	/* Save user state */
 	msr CPSR_c, #0xDF /* System mode */
-	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
-  mov r6, lr
-  mov r5, sp
+  mov a3, lr
+  mov a2, sp
 	msr CPSR_c, #0xD3 /* Supervisor mode */
 
-	mrs r4, SPSR
-  push {r4-r6}
-
-  blx r10
-
-  mov a4, r0
-  pop {a1-a3}
+	mrs a1, SPSR
 	mov lr, pc
 	ldr pc, =SaveTaskState
 
+  /* Jump into kernel */
 	pop {r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
 	mov sp, ip
 	bx lr
