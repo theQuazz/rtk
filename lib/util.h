@@ -1,6 +1,6 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-#define DelaySeconds( num_secs ) for ( long long ddd = 0; ddd / 10 < num_secs * 17316017; ddd++ ) {}
+#define BusyDelayMs( ms ) for ( long long ddd = 0; ddd / 100 < ms * 2400; ddd++ ) asm("")
 
 #endif
