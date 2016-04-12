@@ -55,8 +55,8 @@ test: $(TESTSRCS) $(TEST_EXECUTABLE)
 
 $(OBJECTS) : $(MAKEFILE_NAME)			# OPTIONAL : changes to this file => recompile
 
--include ${DEPENDS}
+-include $(DEPENDS)
 
 clean:
-	$(RM) ~* $(OBJECTS) $(TESTOBJS) $(EXECUTABLE) $(TEST_EXECUTABLE)
+	$(RM) ~* $(OBJECTS) $(TESTOBJS) $(EXECUTABLE) $(DEPENDS) $(TEST_EXECUTABLE) $(ELF) $(BIN) $(ISO)
 
