@@ -11,4 +11,5 @@ void Init( void ) {
   Create( LOW_PRIORITY, usr2 );
   Create( LOW_PRIORITY, usr3 );
   Create( LOW_PRIORITY, usr4 );
+  Create( HIGH_PRIORITY, NameServer );
 }
