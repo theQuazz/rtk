@@ -12,11 +12,8 @@ size_t strnlen( const char *str, size_t num ) {
   return ret;
 }
 
-char *strncpy( char *dest, const char *src, size_t num ) {
-  size_t i = 0;
-  while ( src[i++] && num-- ) dest[i] = src[i];
-  dest[i] = '\0';
-  return dest;
+char *strncpy( char *dst, const char *src, size_t n ) {
+  return memcpy( dst, src, n );
 }
 
 void *memcpy( void *dest, const void *src, size_t num ) {
