@@ -36,6 +36,15 @@ void EnqueueStatefulPriorityTaskQueue(
     struct task_queue_node *node
 );
 
+/** @brief Enqueue task node onto a task queue
+ *
+ *  Running time: O(1)
+ *
+ *  @param queue The queue to place the node onto
+ *  @param node The node to place on the queue
+ */
+void EnqueueTaskQueue( struct task_queue *queue, struct task_queue_node *node);
+
 /** @brief Dequeue task node from a priority task queue
  *
  *  Running time: O(1)

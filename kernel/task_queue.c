@@ -6,6 +6,10 @@ void EnqueueStatefulPriorityTaskQueue(
 ) {
   struct task_queue *queue = &( sptq->states[node->state].priorities[node->priority] );
 
+  EnqueueTaskQueue( queue, node );
+}
+
+void EnqueueTaskQueue( struct task_queue *queue, struct task_queue_node *node) {
   if ( ! queue->last ) {
     queue->last = node;
   }

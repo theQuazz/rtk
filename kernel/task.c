@@ -16,6 +16,8 @@ enum {
   NUM_REGS_POPPED = 14,
 };
 
+static int num_tasks = 0;
+
 static struct task_queue_node task_descriptors[TASK_MAX];
 
 static struct task *current_task = NULL;
@@ -41,9 +43,8 @@ int GetParentTid( void ) {
 }
 
 static int AssignTid( void ) {
-  static int tid = 1;
-  if ( tid >= TASK_MAX ) return -1;
-  return tid++;
+  if ( num_tasks >= TASK_MAX - 1 ) return -1;
+  return num_tasks++;
 }
 
 void Nop( void ) {
@@ -106,13 +107,6 @@ int CreateTaskSafe( int priority, void ( *code )( void ) ) {
   return CreateTask( priority, code );
 }
 
-void SaveTaskState( uint32_t spsr, uint32_t *sp, uint32_t pc, uint32_t ret ) {
-	current_task->spsr = spsr;
-	current_task->sp = sp;
-	current_task->pc = pc;
-  *( current_task->sp ) = ret; // TODO: find better way of storing return code?
-}
-
 void ScheduleAndActivate( void ) {
   ScheduleTask( current_task );
   current_task = GetNextScheduledTask();
@@ -121,4 +115,45 @@ void ScheduleAndActivate( void ) {
   DebugInspectTask( current_task );
 
   Activate( current_task->spsr, current_task->sp, current_task->pc );
+}
+
+void SaveTaskState( uint32_t spsr, uint32_t *sp, uint32_t pc, uint32_t ret ) {
+	current_task->spsr = spsr;
+	current_task->sp = sp;
+	current_task->pc = pc;
+  SetCurrentTaskReturnValue( ret );
+}
+
+void SetCurrentTaskReturnValue( uint32_t ret ) {
+  *( current_task->sp ) = ret; // TODO: find better way of storing return code?
+}
+
+void SetTaskReturnValue( const int tid, uint32_t ret ) {
+  *( task_descriptors[tid].sp ) = ret; // TODO: find better way of storing return code?
+}
+
+void SetTaskState( const int tid, enum TaskState to ) {
+  RemoveStatefulPriorityTaskQueueNode( &scheduler, &task_descriptors[tid] );
+  task_descriptors[tid].state = to;
+  EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid] );
+}
+
+enum TaskState GetTaskState( const int tid ) {
+  return task_descriptors[tid].state;
+}
+
+void SetCurrentTaskState( enum TaskState to ) {
+  current_task->state = to;
+}
+
+enum TaskState GetCurrentTaskState( void ) {
+  return current_task->state;
+}
+
+bool IsValidTid( int tid ) {
+  return 0 <= tid && tid < TASK_MAX;
+}
+
+bool IsTaskAlive( int tid ) {
+  return IsValidTid( tid ) && tid < num_tasks && GetTaskState( tid ) != ZOMBIE;
 }
