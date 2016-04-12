@@ -41,6 +41,7 @@ int MyTid( void );
 int MyParentTid( void );
 enum MyParentTidError {
   ERR_PARENT_DESTROYED = -1,
+  ERR_NO_PARENT = -2,
 };
 
 /** @brief Cease execution, remaining ready to run

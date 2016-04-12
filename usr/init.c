@@ -3,18 +3,13 @@
 #include "../kernel/task_utils.h"
 #include "./nameserver.h"
 #include "./test_procs.h"
-#include "../lib/print.h"
+#include "../lib/debug.h"
 
 void Init( void ) {
-  // Task_create( LOW_PRIORITY, NameServer );
+  Debugln( "Initializing tasks..." );
 
-  Task_create( LOW_PRIORITY, usr1 );
-  Task_create( LOW_PRIORITY, usr2 );
-  Task_create( LOW_PRIORITY, usr3 );
-  Task_create( LOW_PRIORITY, usr4 );
-
-  for ( ;; ) {
-    Print( 0, "Init...\n");
-    syscall();
-  }
+  Create( LOW_PRIORITY, usr1 );
+  Create( LOW_PRIORITY, usr2 );
+  Create( LOW_PRIORITY, usr3 );
+  Create( LOW_PRIORITY, usr4 );
 }

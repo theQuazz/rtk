@@ -21,7 +21,7 @@ void NameServer() {
             struct NameServerWhoIsResponse reply = {
               type: NS_WHO_IS_REPLY,
               status: HashTableGet( &ht, Hash( msg.name ), &whois_tid ),
-              whois_tid: whois_tid,
+              whois_tid,
             };
             Reply( tid, &reply, sizeof( reply ) );
             break;

@@ -3,98 +3,123 @@
 #include "task_queue.h"
 #include "asm.h"
 #include "../lib/string.h"
-#include "../lib/print.h"
+#include "../lib/debug.h"
 #include "../arch/arm/mmio.h"
 
-struct task_queue_node task_descriptors[TASK_MAX];
+#ifdef DEBUG
+#define DebugInspectTask( task ) \
+  DebugPrint( "#<Task:%d tid=%d priority=%d spsr=%d sp=%d pc=%d>\n", task, task->tid, task->priority, task->spsr, task->sp, task->pc );
+#else
+#define DebugInspectTask(...)
+#endif
 
-struct task *current_task = NULL;
-struct task *null_task = NULL;
+enum {
+  NUM_REGS_POPPED = 14,
+};
 
-struct stateful_priority_task_queue scheduler;
+static struct task_queue_node task_descriptors[TASK_MAX];
 
-const char stacks[STACK_SIZE][TASK_MAX];
+static struct task *current_task = NULL;
 
-static void null_process( void ) {
-  for ( ;; ) {
-    Print( 0, "Null process...\n" );
-    syscall();
-  }
-}
+static struct stateful_priority_task_queue scheduler;
 
-int assign_tid() {
-  static int tid = 0;
+static char stacks[STACK_SIZE][TASK_MAX];
+
+int AssignTid() {
+  static int tid = 1;
+  if ( tid >= TASK_MAX ) return -1;
   return tid++;
 }
 
-int get_current_tid() {
-  return current_task ? current_task->tid : 0;
+int GetCurrentTid() {
+  return current_task ? current_task->tid : -1;
 }
 
-struct task *get_next_scheduled_task( void ) {
+int GetParentTid() {
+  if ( ! current_task->parent ) {
+    return ERR_NO_PARENT;
+  }
+
+  if ( current_task->parent->state == ZOMBIE ) {
+    return ERR_PARENT_DESTROYED;
+  }
+
+  return current_task->parent->tid;
+}
+
+struct task *GetNextScheduledTask( void ) {
   return dequeue_priority_task_queue( &scheduler.states[READY] );
 }
 
-void schedule_task( struct task *task ) {
+void ScheduleTask( struct task *task ) {
   enqueue_stateful_priority_task_queue( &scheduler, ( struct task_queue_node* )task );
 }
 
-void Task_inspect( struct task *task ) {
-  Print( 0, "#<Task:%d tid=%d priority=%d spsr=%d sp=%d pc=%d>\n", task, task->tid, task->priority, task->spsr, task->sp, task->pc );
-}
+int CreateTask( int priority, void ( *code )( void ) ) {
+  const int tid = AssignTid();
+  if ( tid < 0 ) {
+    return ERR_UNAVAILABLE_DESCRIPTOR;
+  }
 
-struct task *Task_create( int priority, void ( *code )( void ) ) {
-  const int tid = assign_tid();
-  const void *stack = stacks[tid];
+  uint32_t *stack = ( uint32_t* )stacks[tid];
+  stack[STACK_SIZE - 1] = ( uint32_t )Exit; // task initial lr
 
   struct task t = {
-    tid: tid,
+    tid,
     state: READY,
-    priority: priority,
-    parent_tid: get_current_tid(),
-    sp: ( long )stack + STACK_SIZE - 14 * 4, // allow space for 14 registers (word size = 4 bytes) to be popped
+    priority,
+    parent: current_task,
+    sp: stack + STACK_SIZE - 14, // allow space for 14 registers (word size = 4 bytes) to be popped
     spsr: 0x10,
     pc: ( long )code,
-    return_value: 0,
   };
 
   struct task *task = &task_descriptors[t.tid];
 
   memcpy( task, &t, sizeof( struct task ) );
 
-  schedule_task( task );
+  ScheduleTask( task );
 
-  Print( 0, "Task_create( %d, %d ) from %d\n", priority, code, current_task->tid );
-  Task_inspect( task );
+  Debug( "Creating " );
+  DebugInspectTask( task );
 
-  return task;
+  return task->tid;
 }
 
-void save_task_state( uint32_t spsr, uint32_t sp, uint32_t pc ) {
+int CreateTaskSafe( int priority, void ( *code )( void ) ) {
+  if ( priority < HIGHEST_PRIORITY || LOW_PRIORITY < priority ) {
+    return ERR_INVALID_PRIORITY;
+  }
+
+  return CreateTask( priority, code );
+}
+
+void SaveTaskState( uint32_t spsr, uint32_t *sp, uint32_t pc, uint32_t ret ) {
 	current_task->spsr = spsr;
 	current_task->sp = sp;
 	current_task->pc = pc;
+  *( current_task->sp ) = ret;
 }
 
-void release_processor() {
-  Print( 0, "Release processor by %d...\n", current_task->tid );
-  for ( int j = 0; j < 600000000; j++ ) { j = j + 1; }
+void ScheduleAndActivate( void ) {
+  ScheduleTask( current_task );
+  current_task = GetNextScheduledTask();
 
-  if ( current_task && current_task != null_task ) {
-    schedule_task( current_task );
-  }
+  Debug( "Switching to " );
+  DebugInspectTask( current_task );
 
-  current_task = get_next_scheduled_task();
-
-  if ( ! current_task ) {
-    current_task = null_task;
-  }
-
-  Print( 0, "Switching to " );
-  Task_inspect( current_task );
-  activate( current_task->spsr, current_task->sp, current_task->pc );
+  Activate( current_task->spsr, current_task->sp, current_task->pc );
 }
 
-void tasks_init( void ) {
-  null_task = Task_create( NULL_PRIORITY, null_process );
+void Nop( void ) {
+  Debug( "Pass " );
+  DebugInspectTask( current_task );
+
+}
+
+void ExitTask( void ) {
+  Debug( "Exit from " );
+  DebugInspectTask( current_task );
+
+  current_task->state = ZOMBIE;
 }

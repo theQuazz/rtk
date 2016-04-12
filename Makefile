@@ -1,9 +1,8 @@
-ELF=rtk.elf
-BIN=rtk.bin
-TEST_EXECUTABLE=runtests
+DEBUG := NODEBUG
+MAKEFILE_NAME = ${firstword ${MAKEFILE_LIST}}	# makefile name
 
 CC=arm-none-eabi-gcc
-CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm -fplan9-extensions
+CFLAGS=-std=gnu99 -MMD -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm -fplan9-extensions -D$(DEBUG)
 LD=arm-none-eabi-gcc
 LDFLAGS=-N -Ttext=0x10000 -nostartfiles -nostdlib -L$(HOME)/arm-cs-tools/lib/gcc/arm-none-eabi/4.8.3 -lgcc
 
@@ -14,7 +13,18 @@ TESTSRCS=$(wildcard test/*.c)
 TESTOBJS=$(TESTSRCS:.c=.o)
 DEPENDS=$(SOURCES:.c=.d) $(TESTSRCS:.c=.d)
 
+ELF=rtk.elf
+BIN=rtk.bin
+TEST_EXECUTABLE=runtests
+
+#############################################################
+
+.PHONY: build debug clean test
+
 build: $(SOURCES) $(ELF)
+
+debug: DEBUG=DEBUG
+debug: $(SOURCES) $(ELF)
 
 $(ELF): $(OBJECTS)
 
@@ -30,17 +40,20 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .s.o:
-	$(CC) $(CFLAGS) -o $@ -c $^
+	$(CC) $(CFLAGS) -o $@ -c $<
 
-rtk.elf:
+$(ELF):
 	$(LD) $(LDFLAGS) -o $@ $^
 
-.PHONY: clean test
 
 test: CC=gcc
-test: CFLAGS=-Wall -Wextra -pedantic --std=c99 -MMD -DTEST -DDEBUG -g
+test: CFLAGS=-Wall -Wextra --std=c99 -MMD -DTEST -DDEBUG -g
 test: $(TESTSRCS) $(TEST_EXECUTABLE)
 	./$(TEST_EXECUTABLE)
+
+#############################################################
+
+$(OBJECTS) : $(MAKEFILE_NAME)			# OPTIONAL : changes to this file => recompile
 
 -include ${DEPENDS}
 

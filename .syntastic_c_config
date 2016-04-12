@@ -7,3 +7,4 @@
 -fpic
 -marm
 -fplan9-extensions
+-DDEBUG

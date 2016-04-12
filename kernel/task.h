@@ -26,7 +26,7 @@ enum Priority {
 };
 
 enum {
-  NUM_PRIORITIES = NULL_PRIORITY,
+  NUM_PRIORITIES = NULL_PRIORITY + 1,
 };
 
 enum Tids {
@@ -45,11 +45,10 @@ struct task {
   const int tid;
   enum TaskState state;
   enum Priority priority;
-  const int parent_tid;
-  uint32_t sp;
+  struct task *parent;
+  uint32_t *sp;
   uint32_t spsr;
   uint32_t pc;
-  uint32_t return_value;
 };
 
 #endif
