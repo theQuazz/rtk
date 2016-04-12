@@ -1,12 +1,13 @@
-#include "./nameserver.h"
-#include "./common.h"
-#include "./communication.h"
+#include "nameserver.h"
 #include "../lib/string.h"
 #include "../usr/nameserver.h"
+#include "../include/nameserver.h"
+#include "../include/common.h"
+#include "../include/communication.h"
 
 int nameserver_tid = -1;
 
-int RegisterAs( char *name ) {
+int RegisterAsProxy( char *name ) {
   struct NameServerRegisterAsResponse response;
   struct NameServerRequest request;
 
@@ -28,7 +29,7 @@ int RegisterAs( char *name ) {
   }
 }
 
-int WhoIs( char *name ) {
+int WhoIsProxy( char *name ) {
   struct NameServerWhoIsResponse response;
   struct NameServerRequest request;
   

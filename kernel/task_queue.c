@@ -1,6 +1,6 @@
 #include "task_queue.h"
 
-void enqueue_stateful_priority_task_queue(
+void EnqueueStatefulPriorityTaskQueue(
     struct stateful_priority_task_queue *sptq,
     struct task_queue_node *node
 ) {
@@ -19,9 +19,9 @@ void enqueue_stateful_priority_task_queue(
   queue->first = node;
 }
 
-struct task_queue_node *dequeue_priority_task_queue( struct priority_task_queue *pq ) {
+struct task_queue_node *DequeuePriorityTaskQueue( struct priority_task_queue *pq ) {
   for ( enum Priority priority = HIGHEST_PRIORITY; priority < NULL_PRIORITY; priority++ ) {
-    struct task_queue_node *dequeued = dequeue_task_queue( &( pq->priorities[priority] ) );
+    struct task_queue_node *dequeued = DequeueTaskQueue( &( pq->priorities[priority] ) );
     if ( dequeued ) {
       return dequeued;
     }
@@ -30,7 +30,7 @@ struct task_queue_node *dequeue_priority_task_queue( struct priority_task_queue 
   return NULL;
 }
 
-struct task_queue_node *dequeue_task_queue( struct task_queue *queue ) {
+struct task_queue_node *DequeueTaskQueue( struct task_queue *queue ) {
   struct task_queue_node *dequeued = queue->last;
 
   if ( ! dequeued ) {
@@ -52,7 +52,7 @@ struct task_queue_node *dequeue_task_queue( struct task_queue *queue ) {
   return dequeued;
 }
 
-void remove_stateful_priority_task_queue_node(
+void RemoveStatefulPriorityTaskQueueNode(
     struct stateful_priority_task_queue *sptq,
     struct task_queue_node *node
 ) {

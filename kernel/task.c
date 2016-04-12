@@ -1,10 +1,9 @@
 #include "task.h"
-#include "task_utils.h"
 #include "task_queue.h"
 #include "asm.h"
+#include "../include/task.h"
 #include "../lib/string.h"
 #include "../lib/debug.h"
-#include "../arch/arm/mmio.h"
 
 #ifdef DEBUG
 #define DebugInspectTask( task ) \
@@ -25,17 +24,11 @@ static struct stateful_priority_task_queue scheduler;
 
 static char stacks[STACK_SIZE][TASK_MAX];
 
-int AssignTid() {
-  static int tid = 1;
-  if ( tid >= TASK_MAX ) return -1;
-  return tid++;
-}
-
-int GetCurrentTid() {
+int GetCurrentTid( void ) {
   return current_task ? current_task->tid : -1;
 }
 
-int GetParentTid() {
+int GetParentTid( void ) {
   if ( ! current_task->parent ) {
     return ERR_NO_PARENT;
   }
@@ -47,12 +40,31 @@ int GetParentTid() {
   return current_task->parent->tid;
 }
 
-struct task *GetNextScheduledTask( void ) {
-  return dequeue_priority_task_queue( &scheduler.states[READY] );
+static int AssignTid( void ) {
+  static int tid = 1;
+  if ( tid >= TASK_MAX ) return -1;
+  return tid++;
 }
 
-void ScheduleTask( struct task *task ) {
-  enqueue_stateful_priority_task_queue( &scheduler, ( struct task_queue_node* )task );
+void Nop( void ) {
+  Debug( "Pass " );
+  DebugInspectTask( current_task );
+
+}
+
+void ExitTask( void ) {
+  Debug( "Exit from " );
+  DebugInspectTask( current_task );
+
+  current_task->state = ZOMBIE;
+}
+
+static struct task *GetNextScheduledTask( void ) {
+  return DequeuePriorityTaskQueue( &scheduler.states[READY] );
+}
+
+static void ScheduleTask( struct task *task ) {
+  EnqueueStatefulPriorityTaskQueue( &scheduler, ( struct task_queue_node* )task );
 }
 
 int CreateTask( int priority, void ( *code )( void ) ) {
@@ -109,17 +121,4 @@ void ScheduleAndActivate( void ) {
   DebugInspectTask( current_task );
 
   Activate( current_task->spsr, current_task->sp, current_task->pc );
-}
-
-void Nop( void ) {
-  Debug( "Pass " );
-  DebugInspectTask( current_task );
-
-}
-
-void ExitTask( void ) {
-  Debug( "Exit from " );
-  DebugInspectTask( current_task );
-
-  current_task->state = ZOMBIE;
 }

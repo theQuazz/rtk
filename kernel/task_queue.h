@@ -1,5 +1,5 @@
-#ifndef __TASK_QUEUE_H__
-#define __TASK_QUEUE_H__
+#ifndef __K_TASK_QUEUE_H__
+#define __K_TASK_QUEUE_H__
 
 #include <stddef.h>
 
@@ -31,7 +31,7 @@ struct stateful_priority_task_queue {
  *  @param sptq The queue to place the node onto
  *  @param node The node to place on the queue
  */
-void enqueue_stateful_priority_task_queue(
+void EnqueueStatefulPriorityTaskQueue(
     struct stateful_priority_task_queue *sptq,
     struct task_queue_node *node
 );
@@ -43,7 +43,7 @@ void enqueue_stateful_priority_task_queue(
  *  @param pq The queue to dequeue from
  *  @return Dequeued task node
  */
-struct task_queue_node *dequeue_priority_task_queue( struct priority_task_queue *pq );
+struct task_queue_node *DequeuePriorityTaskQueue( struct priority_task_queue *pq );
 
 /** @brief Dequeue task node from a task queue
  *
@@ -52,7 +52,7 @@ struct task_queue_node *dequeue_priority_task_queue( struct priority_task_queue 
  *  @param task_queue The task queue to dequeue from
  *  @return Dequeued task node
  */
-struct task_queue_node *dequeue_task_queue( struct task_queue *queue );
+struct task_queue_node *DequeueTaskQueue( struct task_queue *queue );
 
 /** @brief Remove a node from a stateful priority queue
  *
@@ -61,7 +61,7 @@ struct task_queue_node *dequeue_task_queue( struct task_queue *queue );
  *  @param queue The task queue to remove the node from
  *  @param node The node to remove
  */
-void remove_stateful_priority_task_queue_node(
+void RemoveStatefulPriorityTaskQueueNode(
     struct stateful_priority_task_queue *queue,
     struct task_queue_node *node
 );

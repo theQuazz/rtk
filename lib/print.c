@@ -1,6 +1,10 @@
 #include "./print.h"
 
-void Putc( int channel, char c );
+void uart_putc( unsigned char c );
+
+static void putc( int channel, unsigned char c ) {
+  uart_putc( c );
+}
 
 static char* bf;
 static char buf[12];
@@ -38,7 +42,7 @@ void Print( int channel, char *fmt, ...)
 
   while ((ch=*(fmt++))) {
     if (ch!='%') {
-      Putc(channel, ch);
+      putc(channel, ch);
     }
     else {
       char lz=0;
@@ -99,9 +103,9 @@ void Print( int channel, char *fmt, ...)
       while (*bf++ && w > 0)
         w--;
       while (w-- > 0) 
-        Putc(channel, lz ? '0' : ' ');
+        putc(channel, lz ? '0' : ' ');
       while ((ch= *p++))
-        Putc(channel, ch);
+        putc(channel, ch);
     }
   }
 abort:;

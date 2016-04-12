@@ -32,3 +32,38 @@ MyParentTid:
   ldr r10, =GetParentTid
   svc 0
   bx lr
+
+.type Putc %function
+.global Putc
+Putc:
+  ldr r10, =PutcProxy
+  svc 0
+  bx lr
+
+.type Getc %function
+.global Getc
+Getc:
+  ldr r10, =GetcProxy
+  svc 0
+  bx lr
+
+.type Send %function
+.global Send
+Send:
+  ldr r10, =SendProxy
+  svc 0
+  bx lr
+
+.type Receive %function
+.global Receive
+Receive:
+  ldr r10, =ReceiveProxy
+  svc 0
+  bx lr
+
+.type Reply %function
+.global Reply
+Reply:
+  ldr r10, =ReplyProxy
+  svc 0
+  bx lr

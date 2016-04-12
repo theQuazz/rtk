@@ -1,10 +1,14 @@
-#include "./communication.h"
+#include "communication.h"
+#include "../include/common.h"
 
-int Send( int tid, void *msg, int msglen, void *reply, int replylen ) {
+int SendProxy( int tid, void *msg, int msglen, void *reply, int replylen ) {
+  return RETURN_STATUS_OK;
 }
 
-int Receive( int *tid, void *msg, int msglen ) {
+int ReceiveProxy( int *tid, void *msg, int msglen ) {
+  return RETURN_STATUS_OK;
 }
 
-int Reply( int tid, void *reply, int replylen ) {
+int ReplyProxy( int tid, void *reply, int replylen ) {
+  return RETURN_STATUS_OK;
 }

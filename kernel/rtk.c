@@ -1,8 +1,5 @@
 #include "rtk.h"
-#include "../arch/arm/mmio.h"
-#include "kernel.h"
-#include "asm.h"
-#include "task_utils.h"
+#include "task.h"
 #include "../usr/null.h"
 #include "../usr/init.h"
 

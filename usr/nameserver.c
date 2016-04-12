@@ -1,6 +1,5 @@
-#include "./nameserver.h"
+#include "nameserver.h"
 #include "../lib/hash.h"
-#include "../usr/nameserver.h"
 #include "../lib/hashtable.h"
 
 void NameServer() {

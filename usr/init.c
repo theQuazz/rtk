@@ -1,8 +1,7 @@
-#include "./init.h"
-#include "../kernel/task.h"
-#include "../kernel/task_utils.h"
-#include "./nameserver.h"
-#include "./test_procs.h"
+#include "init.h"
+#include "nameserver.h"
+#include "test_procs.h"
+#include "../include/task.h"
 #include "../lib/debug.h"
 
 void Init( void ) {

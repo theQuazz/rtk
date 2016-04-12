@@ -1,5 +1,7 @@
-#ifndef __TASK_UTILS_H__
-#define __TASK_UTILS_H__
+#ifndef __TASK_H__
+#define __TASK_H__
+
+#include "task_priority.h"
 
 /** @brief Instantiate a task
  *
@@ -15,7 +17,7 @@
  *  @param code Entry point of the task
  *  @return Tid of new task or CreateError
  */
-int Create( int priority, void ( *code )( void ) );
+int Create( enum Priority priority, void ( *code )( void ) );
 enum CreateError {
   ERR_INVALID_PRIORITY = -1,
   ERR_UNAVAILABLE_DESCRIPTOR = -2,

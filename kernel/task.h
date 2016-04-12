@@ -1,7 +1,9 @@
-#ifndef __TASK_H__
-#define __TASK_H__
+#ifndef __K_TASK_H__
+#define __K_TASK_H__
 
 #include <stdint.h>
+
+#include "../include/task_priority.h"
 
 enum TaskState {
   READY,
@@ -17,20 +19,8 @@ enum {
   NUM_TASK_STATES = EVENT_BLOCKED + 1,
 };
 
-enum Priority {
-  HIGHEST_PRIORITY = 0,
-  HIGH_PRIORITY = 1,
-  MEDIUM_PRIORITY = 2,
-  LOW_PRIORITY = 3,
-  NULL_PRIORITY = 4,
-};
-
 enum {
   NUM_PRIORITIES = NULL_PRIORITY + 1,
-};
-
-enum Tids {
-  NULL_TID = 0,
 };
 
 enum {
@@ -50,5 +40,21 @@ struct task {
   uint32_t spsr;
   uint32_t pc;
 };
+
+int GetCurrentTid( void );
+
+int GetParentTid( void );
+
+void SaveTaskState( uint32_t spsr, uint32_t *sp, uint32_t pc, uint32_t ret );
+
+int CreateTask( int priority, void ( *code )( void ) );
+
+int CreateTaskSafe( int priority, void ( *code )( void ) );
+
+void ScheduleAndActivate( void );
+
+void Nop( void );
+
+void ExitTask( void );
 
 #endif

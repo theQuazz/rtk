@@ -1,8 +1,8 @@
 #ifndef __NAMESERVER_PROC_H__
 #define __NAMESERVER_PROC_H__
 
-#include "../kernel/nameserver.h"
-#include "../kernel/communication.h"
+#include "../include/nameserver.h"
+#include "../include/communication.h"
 
 enum {
   NS_NAME_BUFFER_SIZE = 128,

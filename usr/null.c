@@ -1,5 +1,5 @@
-#include "./null.h"
-#include "../kernel/task_utils.h"
+#include "null.h"
+#include "../include/task.h"
 #include "../lib/print.h"
 
 void NullProcess( void ) {
