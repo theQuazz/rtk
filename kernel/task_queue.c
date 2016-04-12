@@ -24,7 +24,7 @@ void EnqueueTaskQueue( struct task_queue *queue, struct task_queue_node *node) {
 }
 
 struct task_queue_node *DequeuePriorityTaskQueue( struct priority_task_queue *pq ) {
-  for ( enum Priority priority = HIGHEST_PRIORITY; priority < NULL_PRIORITY; priority++ ) {
+  for ( enum Priority priority = HIGHEST_PRIORITY; priority <= NULL_PRIORITY; priority++ ) {
     struct task_queue_node *dequeued = DequeueTaskQueue( &( pq->priorities[priority] ) );
     if ( dequeued ) {
       return dequeued;
