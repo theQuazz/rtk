@@ -1,10 +1,12 @@
 #include "null.h"
 #include "../include/task.h"
-#include "../lib/print.h"
+#include "../lib/debug.h"
+#include "../lib/util.h"
 
 void NullProcess( void ) {
   for ( ;; ) {
-    Print( 0, "Null process...\n" );
+    Debugln( "Null process..." );
+    BusyDelayMs( 100 );
     Pass();
   }
 }
