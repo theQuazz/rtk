@@ -40,7 +40,7 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TESTOBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .s.o:
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(ELF):
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -58,5 +58,4 @@ $(OBJECTS) : $(MAKEFILE_NAME)			# OPTIONAL : changes to this file => recompile
 -include $(DEPENDS)
 
 clean:
-	$(RM) ~* $(OBJECTS) $(TESTOBJS) $(EXECUTABLE) $(DEPENDS) $(TEST_EXECUTABLE) $(ELF) $(BIN) $(ISO)
-
+	$(RM) ~* $(OBJECTS) $(TESTOBJS) $(DEPENDS) $(TEST_EXECUTABLE) $(ELF) $(BIN)
