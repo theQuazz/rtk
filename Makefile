@@ -4,7 +4,7 @@ MAKEFILE_NAME = ${firstword ${MAKEFILE_LIST}}	# makefile name
 CC=arm-none-eabi-gcc
 CFLAGS=-std=gnu99 -MMD -ffreestanding -O2 -Wall -Wextra -mcpu=arm1176jzf-s -fpic -marm -fplan9-extensions -D$(DEBUG)
 LD=arm-none-eabi-gcc
-LDFLAGS=-N -Ttext=0x10000 -nostartfiles -nostdlib -L$(HOME)/arm-cs-tools/lib/gcc/arm-none-eabi/4.8.3 -lgcc
+LDFLAGS=-N -Ttext=0x10000 -nostartfiles -L$(HOME)/arm-cs-tools/lib/gcc/arm-none-eabi/5.2.0 -lgcc
 
 SOURCES=$(wildcard ./kernel/*.c) $(wildcard ./arch/arm/*.c) $(wildcard ./lib/*.c) $(wildcard ./usr/*.c) main.c
 ASM=$(wildcard ./arch/arm/*.s)
