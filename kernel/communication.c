@@ -83,7 +83,7 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
     return RETURN_STATUS_OK;
   }
 
-  struct msg_queue_node *n = ( struct msg_queue_node* )( msg_queues[mytid].first );
+  struct msg_queue_node *n = ( struct msg_queue_node* )( msg_queues[mytid].last );
 
   Debugln( "Message available, retrieving (%d)", n->msg_buffer );
 
