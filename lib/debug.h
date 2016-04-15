@@ -16,7 +16,10 @@
 #endif
 
 #define Error( msg, ...) Print( 0, "[ERROR] %s:%d: " msg, __FILE__, __LINE__, ##__VA_ARGS__ )
+#define Errorln( msg, ...) Error( msg "\n", ##__VA_ARGS__ )
 #define Warn( msg, ...) Print( 0, "[WARN] %s:%d: " msg, __FILE__, __LINE__, ##__VA_ARGS__ )
+#define Warnln( msg, ...) Warn( msg "\n", ##__VA_ARGS__ )
 #define Info( msg, ...) Print( 0, "[INFO] %s:%d: " msg, __FILE__, __LINE__, ##__VA_ARGS__ )
+#define Infoln( msg, ...) Info( msg "\n", ##__VA_ARGS__ )
 
 #endif
