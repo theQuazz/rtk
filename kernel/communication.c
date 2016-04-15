@@ -7,7 +7,7 @@
 #include "../lib/math.h"
 
 static struct msg_queue_node nodes[TASK_MAX];
-static struct task_queue msg_queues[TASK_MAX];
+static struct queue msg_queues[TASK_MAX];
 
 void InitCommunication( void ) {
   for ( int i = 0; i < TASK_MAX; i++ ) {
@@ -45,7 +45,7 @@ int SendProxy( int tid, void *msg, int msglen, void *reply, int replylen ) {
 
   memcpy( node, &n, sizeof( n ) );
 
-  EnqueueTaskQueue( &msg_queues[tid], node );
+  EnqueueQueue( &msg_queues[tid], node );
 
   SetCurrentTaskState( SEND_BLOCKED );
 
@@ -96,7 +96,7 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
 }
 
 int CompleteReceive( int tid ) {
-  struct msg_queue_node *n = ( struct msg_queue_node* )DequeueTaskQueue( &msg_queues[tid] );
+  struct msg_queue_node *n = ( struct msg_queue_node* )DequeueQueue( &msg_queues[tid] );
 
   *( n->put_tid ) = n->from_tid;
   if ( n->receive_buffer != NULL && n->msg_buffer != NULL ) {

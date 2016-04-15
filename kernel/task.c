@@ -18,7 +18,7 @@ enum {
 
 static int num_tasks = 0;
 
-static struct task_queue_node task_descriptors[TASK_MAX];
+static struct task task_descriptors[TASK_MAX];
 
 static struct task *current_task = NULL;
 
@@ -50,7 +50,6 @@ static int AssignTid( void ) {
 void Nop( void ) {
   Debug( "Pass " );
   DebugInspectTask( current_task );
-
 }
 
 void ExitTask( void ) {
@@ -65,7 +64,7 @@ static struct task *GetNextScheduledTask( void ) {
 }
 
 static void ScheduleTask( struct task *task ) {
-  EnqueueStatefulPriorityTaskQueue( &scheduler, ( struct task_queue_node* )task );
+  EnqueueStatefulPriorityTaskQueue( &scheduler, task );
 }
 
 int CreateTask( int priority, void ( *code )( void ) ) {
@@ -78,6 +77,8 @@ int CreateTask( int priority, void ( *code )( void ) ) {
   stack[STACK_SIZE - 1] = ( uint32_t )Exit; // task initial lr
 
   struct task t = {
+    next: NULL,
+    prev: NULL,
     tid,
     state: READY,
     priority,

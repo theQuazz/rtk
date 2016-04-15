@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "../include/task_priority.h"
+#include "../lib/queue.h"
 
 enum TaskState {
   ZOMBIE,
@@ -33,6 +34,7 @@ enum {
 };
 
 struct task {
+  struct queue_node;
   const int tid;
   enum TaskState state;
   enum Priority priority;

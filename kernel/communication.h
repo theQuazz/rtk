@@ -10,7 +10,7 @@ enum {
 };
 
 struct msg_queue_node {
-  struct task_queue_node;
+  struct queue_node;
   int from_tid;
   int to_tid;
   int *put_tid;
