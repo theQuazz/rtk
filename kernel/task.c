@@ -135,7 +135,9 @@ void SetTaskReturnValue( const int tid, uint32_t ret ) {
 void SetTaskState( const int tid, enum TaskState to ) {
   RemoveStatefulPriorityTaskQueueNode( &scheduler, &task_descriptors[tid] );
   task_descriptors[tid].state = to;
-  EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid] );
+  if ( tid != current_task->tid ) {
+    EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid] );
+  }
 }
 
 enum TaskState GetTaskState( const int tid ) {
