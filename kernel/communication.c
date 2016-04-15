@@ -4,6 +4,7 @@
 #include "../include/communication.h"
 #include "../lib/string.h"
 #include "../lib/debug.h"
+#include "../lib/math.h"
 
 static struct msg_queue_node nodes[TASK_MAX];
 static struct task_queue msg_queues[TASK_MAX];
@@ -97,8 +98,10 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
 int CompleteReceive( int tid ) {
   struct msg_queue_node *n = ( struct msg_queue_node* )DequeueTaskQueue( &msg_queues[tid] );
 
-  memcpy( n->receive_buffer, n->msg_buffer, n->receive_buffer_size );
   *( n->put_tid ) = n->from_tid;
+  if ( n->receive_buffer != NULL && n->msg_buffer != NULL ) {
+    memcpy( n->receive_buffer, n->msg_buffer, min( n->receive_buffer_size, n->msg_buffer_size ) );
+  }
 
   SetTaskState( n->from_tid, REPLY_BLOCKED );
   SetTaskState( n->to_tid, READY );
@@ -129,7 +132,9 @@ int ReplyProxy( int tid, void *reply, int replylen ) {
     return ERR_NOT_REPLY_BLOCKED;
   }
 
-  memcpy( n->reply_buffer, reply, n->reply_buffer_size );
+  if ( n->reply_buffer != NULL && reply !=  NULL ) {
+    memcpy( n->reply_buffer, reply, min( n->reply_buffer_size, replylen ) );
+  }
 
   SetTaskState( n->from_tid, READY );
   SetTaskReturnValue( n->from_tid, replylen );
