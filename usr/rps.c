@@ -1,7 +1,9 @@
 #include "rps.h"
+#include "../include/task.h"
 #include "../include/nameserver.h"
 #include "../lib/random.h"
 #include "../lib/debug.h"
+#include "../lib/string.h"
 
 #include <stddef.h>
 
@@ -17,6 +19,16 @@ struct RpsGame {
     } state;
   } player;
 };
+
+void RpsSignup( void ) {
+  int rps_tid = WhoIs( "rps-server" );
+
+  struct RpsRequest req = {
+    type: RPS_REQ_SIGNUP,
+  };
+
+  Send( rps_tid, &req, sizeof( req ), NULL, 0 );
+}
 
 enum RpsResult RpsPlay( enum RpsThrow choice ) {
   int rps_tid = WhoIs( "rps-server" );
@@ -48,13 +60,8 @@ void RpsQuit( void ) {
 
 void RpsClient( void ) {
   int cumulative_score = 0;
-  int rps_tid = WhoIs( "rps-server" );
 
-  struct RpsRequest req = {
-    type: RPS_REQ_SIGNUP,
-  };
-
-  Send( rps_tid, &req, sizeof( req ), NULL, 0 );
+  RpsSignup();
 
   while ( cumulative_score < 20 ) {
     enum RpsThrow choice = RandMax( RPS_NUM_THROWS - 1 );
@@ -205,5 +212,65 @@ void RpsServer( void ) {
         break;
       }
     }
+  }
+}
+
+static void RpsCmdClient( void ) {
+  RpsSignup();
+  for ( ;; ) {
+    RpsPlay( RandMax( RPS_NUM_THROWS - 1 ) );
+  }
+  RpsQuit();
+}
+
+void RpsCmdServer( void ) {
+  while ( RegisterAs( "rps" ) == ERR_INVALID_NAMESERVER_TID );
+
+  Create( MEDIUM_PRIORITY, RpsCmdClient );
+
+  RpsSignup();
+
+  for ( ;; ) {
+    char buf[128];
+    int sender_tid;
+
+    Receive( &sender_tid, buf, sizeof( buf ) );
+
+    strtok( buf, " " );
+    char *throw = strtok( NULL, " " );
+
+    int ret = -1;
+    if ( 0 == strcmp( "rock", throw ) ) {
+      ret = RpsPlay( RPS_ROCK );
+    }
+    else if ( 0 == strcmp( "paper", throw ) ) {
+      ret = RpsPlay( RPS_PAPER );
+    }
+    else if ( 0 == strcmp( "scissors", throw ) ) {
+      ret = RpsPlay( RPS_SCISSORS );
+    }
+    else {
+      Print( 0, "Invalid invocation\n" );
+    }
+
+    switch ( ret ) {
+      case RPS_WIN:
+        Print( 0, "win\n" );
+        ret = 0;
+        break;
+      case RPS_LOSS:
+        Print( 0, "loss\n" );
+        ret = 0;
+        break;
+      case RPS_TIE:
+        Print( 0, "tie\n" );
+        ret = 0;
+        break;
+      default:
+        ret = -1;
+        break;
+    }
+
+    Reply( sender_tid, &ret, sizeof( ret ) );
   }
 }

@@ -19,6 +19,7 @@ void Init( void ) {
   Create( MEDIUM_PRIORITY, EchoServer );
   Create( MEDIUM_PRIORITY, RandServer );
   Create( MEDIUM_PRIORITY, RpsServer );
+  Create( MEDIUM_PRIORITY, RpsCmdServer );
   Create( MEDIUM_PRIORITY, RpsClient );
   Create( MEDIUM_PRIORITY, RpsClient );
   Create( MEDIUM_PRIORITY, RpsClient );

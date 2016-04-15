@@ -47,5 +47,6 @@ void RpsQuit( void );
 
 void RpsClient( void );
 void RpsServer( void );
+void RpsCmdServer( void );
 
 #endif
