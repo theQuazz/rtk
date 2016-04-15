@@ -31,4 +31,13 @@ struct queue_node *DequeueQueue( struct queue *queue );
  */
 void EnqueueQueue( struct queue *queue, struct queue_node *node);
 
+/** @brief Remove node from a queue
+ *
+ *  Running time: O(1)
+ *
+ *  @param queue The queue to remove the node from
+ *  @param node The node to remove from the queue
+ */
+void RemoveQueueNode( struct queue *queue, struct queue_node *node );
+
 #endif

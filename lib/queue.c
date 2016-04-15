@@ -36,3 +36,22 @@ struct queue_node *DequeueQueue( struct queue *queue ) {
   return dequeued;
 }
 
+void RemoveQueueNode( struct queue *queue, struct queue_node *node ) {
+  if ( ( void* )( queue->first ) == ( void* )node ) {
+    queue->first = node->next;
+  }
+
+  if ( ( void* )( queue->last ) == ( void* )node ) {
+    queue->last = node->prev;
+  }
+
+  if ( node->next ) {
+    node->next->prev = node->prev;
+  }
+
+  if ( node->prev ) {
+    node->prev->next = node->next;
+  }
+
+  node->next = node->prev = NULL;
+}

@@ -26,21 +26,5 @@ void RemoveStatefulPriorityTaskQueueNode(
 ) {
   struct queue *queue = &( sptq->states[node->state].priorities[node->priority] );
 
-  if ( ( void* )( queue->first ) == ( void* )node ) {
-    queue->first = node->next;
-  }
-
-  if ( ( void* )( queue->last ) == ( void* )node ) {
-    queue->last = node->prev;
-  }
-
-  if ( node->next ) {
-    node->next->prev = node->prev;
-  }
-
-  if ( node->prev ) {
-    node->prev->next = node->next;
-  }
-
-  node->next = node->prev = NULL;
+  RemoveQueueNode( queue, node );
 }
