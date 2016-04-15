@@ -70,7 +70,13 @@ void RemoveStatefulPriorityTaskQueueNode(
     queue->last = node->prev;
   }
 
-  node->next->prev = node->prev;
-  node->prev->next = node->next;
+  if ( node->next ) {
+    node->next->prev = node->prev;
+  }
+
+  if ( node->prev ) {
+    node->prev->next = node->next;
+  }
+
   node->next = node->prev = NULL;
 }
