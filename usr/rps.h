@@ -27,27 +27,13 @@ enum {
   RPS_NUM_THROWS = RPS_SCISSORS + 1,
 };
 
-struct RpsGame {
-  struct RpsGame *next, *prev;
-  struct RpsPlayer {
-    int wins;
-    int ties;
-    int losses;
-    int tid;
-    int choice;
-    enum RpsPlayerState {
-      RPS_PLAYER_ACTIVE,
-      RPS_PLAYER_QUIT,
-    } state;
-  } player_a, player_b;
-};
-
 struct RpsRequest {
   struct BaseMsg;
-  union {
-    enum RpsThrow choice;
-    struct RpsGame game;
-  };
+};
+
+struct RpsThrowRequest {
+  struct RpsRequest;
+  enum RpsThrow choice;
 };
 
 struct RpsPlayResponse {

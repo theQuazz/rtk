@@ -1,14 +1,28 @@
 #include "rps.h"
 #include "../include/nameserver.h"
 #include "../lib/random.h"
+#include "../lib/debug.h"
 
 #include <stddef.h>
+
+struct RpsGame {
+  struct RpsGame *opponent;
+  struct RpsPlayer {
+    int tid;
+    enum RpsThrow choice;
+    enum RpsPlayerState {
+      RPS_PLAYER_ACTIVE,
+      RPS_PLAYER_WAITING,
+      RPS_PLAYER_QUIT,
+    } state;
+  } player;
+};
 
 enum RpsResult RpsPlay( enum RpsThrow choice ) {
   int rps_tid = WhoIs( "rps-server" );
 
   struct RpsPlayResponse res;
-  struct RpsRequest req = {
+  struct RpsThrowRequest req = {
     type: RPS_REQ_PLAY,
     choice: choice,
   };
@@ -42,7 +56,7 @@ void RpsClient( void ) {
 
   Send( rps_tid, &req, sizeof( req ), NULL, 0 );
 
-  while ( cumulative_score < 10 ) {
+  while ( cumulative_score < 20 ) {
     enum RpsThrow choice = RandMax( RPS_NUM_THROWS - 1 );
     enum RpsResult res = RpsPlay( choice );
     if ( res < 0 ) {
@@ -54,32 +68,49 @@ void RpsClient( void ) {
   RpsQuit();
 }
 
-static struct RpsGame games[128];
+enum RpsResult RpsGetResult( enum RpsThrow mine, enum RpsThrow theirs ) {
+  if ( mine == theirs ) {
+    return RPS_TIE;
+  }
+  else if ( ( mine == RPS_ROCK && theirs == RPS_SCISSORS ) || mine > theirs ) {
+    return RPS_WIN;
+  }
+  return RPS_LOSS;
+}
 
 void RpsServer( void ) {
   RegisterAs( "rps-server" );
 
   struct RpsGame *unmatched = NULL;
-  struct RpsGame *games = NULL;
+  struct RpsGame games[1024];
 
   for ( ;; ) {
-    struct RpsRequest req;
+    union {
+      struct RpsRequest;
+      struct RpsThrowRequest throw;
+    } req;
     int sender_tid;
+
     Receive( &sender_tid, &req, sizeof( req ) );
 
     switch ( req.type ) {
       case RPS_REQ_SIGNUP: {
-        struct RpsPlayer *p = &req.game.player_a;
+        Debugln( "%d RPS_REQ_SIGNUP", sender_tid );
+
+        struct RpsGame *game = &games[sender_tid];
+        struct RpsPlayer *p = &game->player;
+
         if ( ! unmatched ) {
-          unmatched = &req.game;
+          unmatched = game;
         }
         else {
-          p = &req.game.player_b;
+          unmatched->opponent = game;
+          game->opponent = unmatched;
+          Reply( unmatched->player.tid, NULL, 0 );
+          Reply( sender_tid, NULL, 0 );
+          unmatched = NULL;
         }
 
-        p->wins = 0;
-        p->ties = 0;
-        p->losses = 0;
         p->tid = sender_tid;
         p->state = RPS_PLAYER_ACTIVE;
 
@@ -87,15 +118,92 @@ void RpsServer( void ) {
       }
 
       case RPS_REQ_PLAY: {
-        struct RpsPlayer *curr, *opp;
-        struct RpsGame *game
-        switch ( sender_tid ) {
-          case 
+        Debugln( "%d RPS_REQ_PLAY", sender_tid );
+
+        struct RpsGame *game = &games[sender_tid];
+        struct RpsPlayer *curr = &game->player;
+        struct RpsPlayer *opp = &game->opponent->player;
+
+        if ( ! curr->state == RPS_PLAYER_ACTIVE ) {
+          break;
         }
+
+        curr->choice = req.throw.choice;
+        Debugln( "%d throws %d", sender_tid, req.throw.choice );
+
+        switch ( opp->state ) {
+          case RPS_PLAYER_ACTIVE: {
+            Debugln( "%d sees %d RPS_PLAYER_ACTIVE", sender_tid, opp->tid );
+
+            curr->state = RPS_PLAYER_WAITING;
+
+            break;
+          }
+
+          case RPS_PLAYER_WAITING: {
+            Debugln( "%d sees %d RPS_PLAYER_WAITING", sender_tid, opp->tid );
+
+            opp->state = RPS_PLAYER_ACTIVE;
+
+            struct RpsPlayResponse my_result = {
+              .type = RPS_RES_PLAY,
+              .result = RpsGetResult( curr->choice, opp->choice ),
+            };
+            struct RpsPlayResponse their_result = {
+              .type = RPS_RES_PLAY,
+              .result = RpsGetResult( opp->choice, curr->choice ),
+            };
+            Debugln( "result: %d => %d, %d => %d", curr->tid, my_result.result, opp->tid, their_result.result );
+            Reply( curr->tid, &my_result, sizeof( my_result ) );
+            Reply( opp->tid, &their_result, sizeof( their_result ) );
+
+            break;
+          }
+
+          case RPS_PLAYER_QUIT: {
+            Debugln( "%d sees %d RPS_PLAYER_QUIT", sender_tid, opp->tid );
+
+            struct RpsPlayResponse res = {
+              type: RPS_QUIT,
+              result: RPS_QUIT,
+            };
+
+            Reply( sender_tid, &res, sizeof( res ) );
+
+            break;
+          }
+        }
+
         break;
       }
 
-      default: break;
+      case RPS_REQ_QUIT: {
+        Debugln( "%d RPS_REQ_QUIT", sender_tid );
+
+        struct RpsPlayer *opp = &( games[sender_tid].opponent->player );
+
+        if ( opp->state == RPS_PLAYER_WAITING ) {
+          Debugln( "informing %d that their opponent quit", opp->tid );
+
+          struct RpsPlayResponse res = {
+            type: RPS_QUIT,
+            result: RPS_QUIT,
+          };
+
+          Reply( sender_tid, &res, sizeof( res ) );
+        }
+
+        games[sender_tid].player.state = RPS_PLAYER_QUIT;
+        Reply( sender_tid, NULL, 0 );
+
+        break;
+      }
+
+      default: {
+        Debugln( "%d RPS_REQ_UNKNOWN", sender_tid );
+
+        break;
+      }
     }
   }
 }
