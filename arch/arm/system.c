@@ -7,7 +7,7 @@
 
 void SystemInit( void ) {
   TimersInit();
-  //UartsInit();
+  UartsInit();
 }
 
 bool IsTimerInterrupt( uint32_t intr ) {

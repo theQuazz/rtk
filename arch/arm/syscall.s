@@ -33,20 +33,6 @@ MyParentTid:
   ldr r10, =GetParentTid
   svc 0
 
-.type Putc %function
-.global Putc
-Putc:
-	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
-  ldr r10, =PutcProxy
-  svc 0
-
-.type Getc %function
-.global Getc
-Getc:
-	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
-  ldr r10, =GetcProxy
-  svc 0
-
 .type Send %function
 .global Send
 Send:
