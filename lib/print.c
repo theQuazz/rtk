@@ -1,9 +1,9 @@
 #include "./print.h"
 
-void uart_putc( unsigned char c );
+void bwputc( unsigned char c );
 
 static void putc( int channel, unsigned char c ) {
-  uart_putc( c );
+  bwputc( c );
 }
 
 static char* bf;

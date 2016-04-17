@@ -16,5 +16,10 @@ keep_loading:
 
 interrupt_table:
 	ldr pc, svc_entry_address
+  nop
+  nop
+  nop
+	ldr pc, irq_entry_address
 	svc_entry_address: .word svc_entry
+	irq_entry_address: .word irq_entry
 interrupt_table_end:

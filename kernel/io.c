@@ -1,12 +1,12 @@
 #include "io.h"
+#include "system.h"
 #include "../include/common.h"
-#include "../arch/arm/mmio.h"
 
 int GetcProxy( int channel ) {
-  return uart_getc();
+  return bwgetc();
 }
 
 int PutcProxy( int channel, char ch ) {
-  uart_putc( ch );
+  bwputc( ch );
   return RETURN_STATUS_OK;
 }
