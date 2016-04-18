@@ -51,7 +51,7 @@ Getc:
 .global Send
 Send:
 	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
-  ldr r4, [sp,#56]
+  ldr r4, [sp, #56]
   ldr r10, =SendProxy
   svc 0
 
@@ -67,4 +67,11 @@ Receive:
 Reply:
 	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
   ldr r10, =ReplyProxy
+  svc 0
+
+.type AwaitEvent %function
+.global AwaitEvent
+AwaitEvent:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =AwaitEventHandler
   svc 0

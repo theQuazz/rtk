@@ -2,20 +2,27 @@
 #include "../include/task.h"
 #include "../include/communication.h"
 #include "../include/nameserver.h"
+#include "../include/clockserver.h"
 #include "../lib/print.h"
 #include "../lib/util.h"
 
 void usr1() {
-  Print( 0, "usr1: MyTid() => %d\n", MyTid() );
-  Print( 0, "usr1: RegisterAs( \"rtk.usr.test_procs.usr1\" ) => %d\n", RegisterAs( "rtk.usr.test_procs.usr1" ) );
-  Print( 0, "usr1: RegisterAs( \"rtk.usr.test_procs.usr2\" ) => %d\n", RegisterAs( "rtk.usr.test_procs.usr2" ) );
-  Print( 0, "usr1: WhoIs( \"rtk.usr.test_procs.usr2\" ) => %d\n", WhoIs( "rtk.usr.test_procs.usr2" ) );
-  Print( 0, "usr1: WhoIs( \"rtk.usr.test_procs.usr3\" ) => %d\n", WhoIs( "rtk.usr.test_procs.usr3" ) );
+  for ( ;; ) {
+    int time = Time();
+    Print( 0, "usr1! %02d:%02d:%02d.%01d\r", ( time / 360000 ) % 60, ( time / 6000 ) % 60, ( time / 100 ) % 60, ( time / 10) % 10 );
+    Delay( 10 );
+  }
 }
 
 void usr2() {
   char msg[] = "Test message usr1 MORE STUFF MORE STUFF MORE STUFF";
   char buf[20];
+
+  Print( 0, "usr2: MyTid() => %d\n", MyTid() );
+  Print( 0, "usr2: RegisterAs( \"rtk.usr.test_procs.usr1\" ) => %d\n", RegisterAs( "rtk.usr.test_procs.usr1" ) );
+  Print( 0, "usr2: RegisterAs( \"rtk.usr.test_procs.usr2\" ) => %d\n", RegisterAs( "rtk.usr.test_procs.usr2" ) );
+  Print( 0, "usr2: WhoIs( \"rtk.usr.test_procs.usr2\" ) => %d\n", WhoIs( "rtk.usr.test_procs.usr2" ) );
+  Print( 0, "usr2: WhoIs( \"rtk.usr.test_procs.usr3\" ) => %d\n", WhoIs( "rtk.usr.test_procs.usr3" ) );
 
   Print( 0, "usr2: Send( -1, %d, %d, %d, %d ) => err( %d )\n", msg, sizeof( msg ), buf, sizeof( buf ), Send( -1, msg, sizeof( msg ), buf, sizeof( buf ) ) );
   Print( 0, "usr2: Send( TASK_MAX, %d, %d, %d, %d ) => err( %d )\n", msg, sizeof( msg ), buf, sizeof( buf ), Send( 1024, msg, sizeof( msg ), buf, sizeof( buf ) ) );

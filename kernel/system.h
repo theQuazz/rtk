@@ -8,12 +8,6 @@ enum {
   TIMER_INTERRUPT_QUANTUM = 10000,
 };
 
-enum SystemEvent {
-  TIMER_EXPIRED,
-  CHAR_RECEIVED,
-  CHAR_TRANSMIT,
-};
-
 void SystemInit( void );
 void Activate( uint32_t spsr, uint32_t *sp, uint32_t code );
 bool IsTimerInterrupt( uint32_t intr );

@@ -1,7 +1,6 @@
 #include "task.h"
 #include "task_queue.h"
 #include "../include/common.h"
-#include "../include/interrupt.h"
 #include "../include/task.h"
 #include "../lib/string.h"
 #include "../lib/debug.h"

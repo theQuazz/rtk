@@ -6,6 +6,7 @@
 
 #include "system.h"
 #include "../include/task_priority.h"
+#include "../include/interrupt.h"
 #include "../lib/queue.h"
 
 enum TaskState {

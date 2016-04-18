@@ -1,5 +1,6 @@
 #include "versatilepb.h"
 #include "../../kernel/system.h"
+#include "../../include/interrupt.h"
 
 #include <stdbool.h>
 #include <stdint.h>

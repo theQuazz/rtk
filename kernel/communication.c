@@ -140,7 +140,7 @@ int ReplyProxy( int tid, void *reply, int replylen ) {
   SetTaskReturnValue( n->from_tid, replylen );
 
   if ( replylen > n->reply_buffer_size ) {
-    Debugln( "Reply buffer is too small!" );
+    Debugln( "Reply buffer is too small! (%d vs %d)", replylen, n->reply_buffer_size );
     return ERR_BUFFER_TOO_SMALL;
   }
 

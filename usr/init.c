@@ -5,6 +5,7 @@
 #include "whoisserver.h"
 #include "randserver.h"
 #include "rps.h"
+#include "clockserver.h"
 #include "test_procs.h"
 #include "../include/task.h"
 #include "../lib/debug.h"
@@ -24,12 +25,14 @@ void Init( void ) {
   Create( MEDIUM_PRIORITY, RpsClient );
   Create( MEDIUM_PRIORITY, RpsClient );
   Create( MEDIUM_PRIORITY, RpsClient );
-  const int shell_tid = Create( LOW_PRIORITY, Shell );
+  Create( HIGH_PRIORITY, ClockServer );
+  Create( MEDIUM_PRIORITY, usr1 );
+  //const int shell_tid = Create( LOW_PRIORITY, Shell );
 
-  struct ShellConfig config = {
-    prompt: "$ ",
-    command_buffer_size: 128,
-  };
+  //struct ShellConfig config = {
+  //  prompt: "$ ",
+  //  command_buffer_size: 128,
+  //};
 
-  Send( shell_tid, &config, sizeof( config ), NULL, 0 );
+  //Send( shell_tid, &config, sizeof( config ), NULL, 0 );
 }

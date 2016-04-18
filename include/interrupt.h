@@ -1,6 +1,12 @@
 #ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
+enum SystemEvent {
+  TIMER_EXPIRED,
+  CHAR_RECEIVED,
+  CHAR_TRANSMIT,
+};
+
 /** @brief Wait for an external event
  *
  *  AwaitEvent blocks until the event identified by eventid occurs then returns.
