@@ -25,6 +25,7 @@
 /* http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0224i/Bbabegge.html */
 #define UART0       ((volatile unsigned int*)0x101f1000)
 #define UART1       ((volatile unsigned int*)0x101f2000)
+#define UART2       ((volatile unsigned int*)0x101f3000)
 /* http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0183g/I18381.html */
 #define UARTFR        0x06 /* 0x18 bytes */
 #define UARTIMSC      0x0E /* 0x38 bytes */

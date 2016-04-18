@@ -1,6 +1,7 @@
 #include "versatilepb.h"
 #include "../../kernel/system.h"
 #include "../../include/interrupt.h"
+#include "../../lib/debug.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -27,14 +28,16 @@ uint32_t GetTimerTime( void ) {
 }
 
 void DisableInterrupt( uint32_t intr ) {
+  Debugln( "DISABLING INTERRUPT 0x%08x", intr );
   *( PIC + VIC_INTENCLEAR ) = intr;
+  *( PIC + VIC_INTENABLE ) = intr;
 }
 
 uint32_t SystemEventToInterrupt( int eventid ) {
   switch ( eventid ) {
     case CHAR_RECEIVED:
     case CHAR_TRANSMIT:
-      return ( uint32_t )UART0;
+      return PIC_UART0;
     default: return -1;
   }
 }
@@ -43,11 +46,14 @@ int InterruptToSystemEvent( uint32_t intr ) {
   switch ( intr ) {
     case PIC_TIMER01: return TIMER_EXPIRED;
     case PIC_UART0: {
-      if ( !( *( UART0 + UARTFR ) & UARTFR_TXFF ) ) {
-        return CHAR_TRANSMIT;
-      }
-      else if ( !( *( UART0 + UARTFR ) & UARTFR_RXFE ) ) {
+      Debugln( "PIC_UART0" );
+      if ( !( *( UART0 + UARTFR ) & UARTFR_RXFE ) ) {
+        *( UART0 + UARTICR ) = UARTICR_RXIC;
         return CHAR_RECEIVED;
+      }
+      if ( !( *( UART0 + UARTFR ) & UARTFR_TXFF ) ) {
+        *( UART0 + UARTICR ) = UARTICR_TXIC;
+        return CHAR_TRANSMIT;
       }
       return -1;
     }
@@ -58,16 +64,27 @@ int InterruptToSystemEvent( uint32_t intr ) {
 void EnableInterruptForEvent( int event ) {
   const int intr = SystemEventToInterrupt( event );
   if ( intr != -1 ) {
+    Debugln( "ENABLING INTERRUPT 0x%08x", intr );
     *( PIC + VIC_INTENABLE ) = intr;
   }
 }
 
-char GetReceivedChar( void ) {
-  return *UART0;
+char GetReceivedChar( int channel ) {
+  switch ( channel ) {
+    case 0: return *UART0;
+    case 1: return *UART1;
+    case 2: return *UART2;
+    default: return '\0';
+  }
 }
 
-void TransmitChar( char c ) {
-  *UART0 = c;
+void TransmitChar( int channel, char c ) {
+  switch ( channel ) {
+    case 0: *UART0 = c; return;
+    case 1: *UART1 = c; return;
+    case 2: *UART2 = c; return;
+    default: return;
+  }
 }
 
 void UartsInit( void ) {
@@ -82,11 +99,11 @@ void TimersInit( void ) {
 }
 
 void bwputc( char c ) {
-  while ( *( UART0 + UARTFR ) & UARTFR_TXFF ) {}
-  *UART0 = c;
+  while ( *( UART1 + UARTFR ) & UARTFR_TXFF ) {}
+  *UART1 = c;
 }
 
 char bwgetc( void ) {
-  while ( *( UART0 + UARTFR ) & UARTFR_RXFE ) {}
-  return *UART0;
+  while ( *( UART1 + UARTFR ) & UARTFR_RXFE ) {}
+  return *UART1;
 }

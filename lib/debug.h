@@ -6,7 +6,7 @@
 #include "./print.h"
 
 #ifdef DEBUG
-#define Debugln( msg, ...) Debug( msg "\n", ##__VA_ARGS__ )
+#define Debugln( msg, ...) Debug( msg "\r\n", ##__VA_ARGS__ )
 #define Debug( msg, ...) Print( 0, "[DEBUG] %s:%d: " msg, __FILE__, __LINE__, ##__VA_ARGS__ )
 #define DebugPrint(...) Print( 0, ##__VA_ARGS__ )
 #else

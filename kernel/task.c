@@ -52,13 +52,13 @@ static int AssignTid( void ) {
 void Nop( void ) {
   Debug( "Pass " );
   DebugInspectTask( current_task );
-  DebugPrint( "\n" );
+  DebugPrint( "\r\n" );
 }
 
 void ExitTask( void ) {
   Debug( "Exit from " );
   DebugInspectTask( current_task );
-  DebugPrint( "\n" );
+  DebugPrint( "\r\n" );
 
   current_task->state = ZOMBIE;
 }
@@ -100,7 +100,7 @@ int CreateTask( int priority, void ( *code )( void ) ) {
 
   Debug( "Creating " );
   DebugInspectTask( task );
-  DebugPrint( "\n" );
+  DebugPrint( "\r\n" );
 
   return task->tid;
 }
@@ -123,7 +123,7 @@ void ScheduleAndActivate( void ) {
 
   Debug( "Switching to " );
   DebugInspectTask( current_task );
-  DebugPrint( " (%d%% utilization)\n", current_task->used_user_time / max( current_task->allowed_user_time / 100, 1 ) );
+  DebugPrint( " (%d%% utilization)\r\n", current_task->used_user_time / max( current_task->allowed_user_time / 100, 1 ) );
 
   Activate( current_task->spsr, current_task->sp, current_task->pc );
 }

@@ -1,9 +1,9 @@
 #include "./print.h"
 
-void bwputc( unsigned char c );
+int Putc( int channel, char c );
 
 static void putc( int channel, unsigned char c ) {
-  bwputc( c );
+  Putc( channel, c );
 }
 
 static char* bf;
