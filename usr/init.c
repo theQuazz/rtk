@@ -17,8 +17,8 @@
 
 void SsTest( void ) {
   for ( int i = 0; ; i++ ) {
-    Print( 1, "abcdefghijklmnopqrstuvwxyz" );
-    Putc( 1, Getc( 1 ) );
+    char ch = Getc( 1 );
+    Putc( 1, ch );
   }
 }
 

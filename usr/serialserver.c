@@ -7,7 +7,7 @@
 #include "../include/clockserver.h"
 #include "../lib/cyclicbuffer.h"
 #include "../lib/debug.h"
-#include "../kernel/system.h"
+#include "../arch/arm/versatilepb.h"
 
 #include <stddef.h>
 
@@ -38,6 +38,7 @@ int Putc( int channel, char ch ) {
     return ERR_INVALID_SERIAL_SERVER_TID;
   }
 
+  Debugln( "wtf %c", ch );
   struct SerialRequest req = {
     .type = SS_TRANSMIT,
     .data = ch,
@@ -69,45 +70,79 @@ int Getc( int channel ) {
 }
 
 void ReceivedNotifier( void ) {
-  while ( RegisterAs( "io-received-notifier" ) == ERR_INVALID_NAMESERVER_TID );
-
   const int serial_tid = MyParentTid();
 
   struct SerialRequest req = {
     .type = SS_RECEIVED,
   };
 
+  *( UART0 + UARTIMSC ) |= UARTIMSC_RXIM;
+
   for ( ;; ) {
-    AwaitEvent( CHAR_RECEIVED );
-    Debugln( "CHAR_RECEIVED" );
-    req.data = GetReceivedChar( 0 );
-    Send( serial_tid, &req, sizeof( req ), NULL, 0 );
+    AwaitEvent( PIC_UART0 );
+    if ( *( UART0 + UARTFR ) & UARTFR_RXFF ) {
+      *( UART0 + UARTICR ) = UARTICR_RXIC;
+      req.data = *UART0;
+      Debugln( "CHAR_RECEIVED (%c)", req.data );
+      Send( serial_tid, &req, sizeof( req ), NULL, 0 );
+    }
+    else {
+      Pass();
+    }
   }
 }
 
 void TransmittedNotifier( void ) {
-  while ( RegisterAs( "io-transmitted-notifier" ) == ERR_INVALID_NAMESERVER_TID );
+  int courier;
 
-  const int serial_tid = MyParentTid();
+  *( UART0 + UARTIMSC ) |= UARTIMSC_TXIM;
+
+  Receive( &courier, NULL, 0 );
+  Reply( courier, NULL, 0 );
+
+  for ( ;; ) {
+    char ch;
+    Receive( &courier, &ch, sizeof ( ch ) );
+    Debugln( "outputting %c", ch );
+    *UART0 = ch;
+
+    for ( ;; ) {
+      AwaitEvent( PIC_UART0 );
+
+      if ( *( UART0 + UARTFR ) & UARTFR_TXFE ) {
+        *( UART0 + UARTICR ) = UARTICR_TXIC;
+        Debugln( "CHAR_TRANSMIT" );
+        Reply( courier, NULL, 0 );
+        break;
+      }
+    }
+  }
+}
+
+void TransmittedCourier( void ) {
+  int notifier;
+  int server;
+
+  Receive( &server, &notifier, sizeof( notifier) );
+  Send( notifier, NULL, 0, NULL, 0 );
+  Reply( server, NULL, 0 );
 
   struct SerialRequest req = {
     .type = SS_TRANSMITTED,
   };
 
+  char res; 
+
   for ( ;; ) {
-    AwaitEvent( CHAR_TRANSMIT );
-    Debugln( "CHAR_TRANSMIT" );
-    Send( serial_tid, &req, sizeof( req ), NULL, 0 );
+    Send( server, &req, sizeof( req ), &res, sizeof( res ) );
+    Send( notifier, &res, sizeof( res ), NULL, 0 );
   }
 }
 
 void SerialServerReceiver( void ) {
+  int serial_tid = MyParentTid();
+
   while ( RegisterAs( "io-receiver" ) == ERR_INVALID_NAMESERVER_TID );
-
-  int serial_tid  = -1;
-
-  do { serial_tid = WhoIs( "io" ); }
-  while ( serial_tid < 0 );
 
   for ( ;; ) {
     int sender_tid;
@@ -120,12 +155,9 @@ void SerialServerReceiver( void ) {
 }
 
 void SerialServerTransmitter( void ) {
+  int serial_tid = MyParentTid();
+
   while ( RegisterAs( "io-transmitter" ) == ERR_INVALID_NAMESERVER_TID );
-
-  int serial_tid  = -1;
-
-  do { serial_tid = WhoIs( "io" ); }
-  while ( serial_tid < 0 );
 
   for ( ;; ) {
     int sender_tid;
@@ -139,26 +171,14 @@ void SerialServerTransmitter( void ) {
 void SerialServer( void ) {
   Debugln( "SerialServer starting" );
 
-  while ( RegisterAs( "io" ) == ERR_INVALID_NAMESERVER_TID );
+  int received_notifier_tid = Create( HIGHEST_PRIORITY, ReceivedNotifier );
+  int receiver_tid = Create( HIGH_PRIORITY, SerialServerReceiver );
 
-  Debugln( "SerialServer registered" );
+  int transmitted_notifier_tid = Create( HIGHEST_PRIORITY, TransmittedNotifier );
+  int transmitted_courier_tid = Create( HIGH_PRIORITY, TransmittedCourier );
+  int transmitter_tid = Create( HIGH_PRIORITY, SerialServerTransmitter );
 
-  int receiver_tid;
-  int transmitter_tid;
-  int received_notifier_tid;
-  int transmitted_notifier_tid;
-
-  Create( HIGHEST_PRIORITY, ReceivedNotifier );
-  Create( HIGHEST_PRIORITY, TransmittedNotifier );
-  Create( HIGH_PRIORITY, SerialServerReceiver );
-  Create( HIGH_PRIORITY, SerialServerTransmitter );
-
-  do { received_notifier_tid = WhoIs( "io-received-notifier" ); } while ( received_notifier_tid < 0 );
-  do { transmitted_notifier_tid = WhoIs( "io-transmitted-notifier" ); } while ( transmitted_notifier_tid < 0 );
-  do { receiver_tid = WhoIs( "io-receiver" ); } while ( receiver_tid < 0 );
-  do { transmitter_tid = WhoIs( "io-transmitter" ); } while ( transmitter_tid < 0 );
-
-  Debugln( "SerialServer ready" );
+  Send( transmitted_courier_tid, &transmitted_notifier_tid, sizeof( transmitted_notifier_tid ), NULL, 0 );
 
   char tbuffer[128];
   struct cyclic_buffer transmit_buffer = {
@@ -168,7 +188,6 @@ void SerialServer( void ) {
     .start = 0,
     .num_els = 0,
   };
-  DebugCyclicBufferInspect( &transmit_buffer );
 
   char rbuffer[128];
   struct cyclic_buffer receive_buffer = {
@@ -179,8 +198,10 @@ void SerialServer( void ) {
     .num_els = 0,
   };
 
-  bool waiting_on_receive = false;
+  int waiting_on_receive = 0;
   bool waiting_on_transmit = true;
+
+  Debugln( "SerialServer ready" );
 
   for ( ;; ) {
     struct SerialRequest req;
@@ -189,16 +210,16 @@ void SerialServer( void ) {
 
     switch ( req.type ) {
       case SS_RECEIVED: {
-        CyclicBufferPush( &receive_buffer, &req.data );
         if ( ! IsCyclicBufferFull( &receive_buffer ) ) {
           Reply( received_notifier_tid, NULL, 0 );
         }
 
-        if ( waiting_on_receive ) {
-          waiting_on_receive = false;
-          char tmp;
-          CyclicBufferPop( &receive_buffer, &tmp );
-          Reply( receiver_tid, &tmp, sizeof( tmp ) );
+        if ( waiting_on_receive > 0 ) {
+          waiting_on_receive--;
+          Reply( receiver_tid, &req.data, sizeof( req.data ) );
+        }
+        else {
+          CyclicBufferPush( &receive_buffer, &req.data );
         }
 
         break;
@@ -206,7 +227,7 @@ void SerialServer( void ) {
 
       case SS_RECEIVE: {
         if ( IsCyclicBufferEmpty( &receive_buffer ) ) {
-          waiting_on_receive = true;
+          waiting_on_receive += 1;
         }
         else {
           bool was_full = IsCyclicBufferFull( &receive_buffer );
@@ -232,8 +253,7 @@ void SerialServer( void ) {
 
           char tmp;
           CyclicBufferPop( &transmit_buffer, &tmp );
-          Reply( transmitted_notifier_tid, NULL, 0 );
-          TransmitChar( 0, tmp );
+          Reply( transmitted_courier_tid, &tmp, tmp );
 
           if ( was_full ) {
             Reply( transmitter_tid, NULL, 0 );
@@ -244,17 +264,18 @@ void SerialServer( void ) {
       }
 
       case SS_TRANSMIT: {
+        Debugln( "got %c from %d", req.data, from_tid );
         CyclicBufferPush( &transmit_buffer, &req.data );
         if ( ! IsCyclicBufferFull( &transmit_buffer ) ) {
           Reply( transmitter_tid, NULL, 0 );
         }
 
         if ( waiting_on_transmit ) {
-          waiting_on_transmit = false;
-          Reply( transmitted_notifier_tid, NULL, 0 );
           char tmp;
+          waiting_on_transmit = false;
           CyclicBufferPop( &transmit_buffer, &tmp );
-          TransmitChar( 0, tmp );
+          Debugln( "sending %c to courier", tmp );
+          Reply( transmitted_courier_tid, &tmp, sizeof( tmp ) );
         }
 
         break;

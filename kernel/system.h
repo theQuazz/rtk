@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 enum {
-  TIMER_INTERRUPT_QUANTUM = 10000,
+  TIMER_INTERRUPT_QUANTUM = 10000000,
 };
 
 void SystemInit( void );

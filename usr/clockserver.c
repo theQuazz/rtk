@@ -8,6 +8,7 @@
 #include "../lib/debug.h"
 #include "../lib/string.h"
 #include "../lib/sortedlist.h"
+#include "../arch/arm/versatilepb.h"
 
 #include <stddef.h>
 
@@ -130,15 +131,16 @@ void ClockServer( void ) {
       case CS_TICK: {
         Reply( sender_tid, NULL, 0 );
         num_ticks += 1;
-        struct sorted_list_node *head = ( void* )delayed_queue;
-        while ( head && head->priority <= num_ticks ) {
-          Reply( ( ( struct task_sorted_list_node* )head )->tid, NULL, 0 );
-          head = head->next;
-        }
-        delayed_queue = head;
         break;
       }
       default: break;
     }
+
+    struct sorted_list_node *head = ( void* )delayed_queue;
+    while ( head && head->priority <= num_ticks ) {
+      Reply( ( ( struct task_sorted_list_node* )head )->tid, NULL, 0 );
+      head = head->next;
+    }
+    delayed_queue = head;
   }
 }

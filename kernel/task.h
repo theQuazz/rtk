@@ -44,7 +44,7 @@ struct task {
   uint32_t *sp;
   uint32_t spsr;
   uint32_t pc;
-  enum SystemEvent awaiting_event_id;
+  int awaiting_event_id;
   long num_activates;
   uint32_t last_activate_at;
   long allowed_user_time;
@@ -83,7 +83,7 @@ bool IsTaskAlive( int tid );
 
 int AwaitEventHandler( int eventid );
 
-void UnblockTaskWaitingOnEvent( enum SystemEvent event );
+void UnblockTaskWaitingOnEvent( int intr );
 
 void HandleIrq( int32_t intr_code );
 

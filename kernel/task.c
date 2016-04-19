@@ -171,35 +171,39 @@ bool IsTaskAlive( int tid ) {
   return IsValidTid( tid ) && tid < num_tasks && GetTaskState( tid ) != ZOMBIE;
 }
 
-int AwaitEventHandler( int eventid ) {
-  Debugln( "AwaitEvent (%d)", eventid );
+int AwaitEventHandler( int intr ) {
+  Debugln( "AwaitEvent (0x%08x)", intr );
 
-  if ( eventid < TIMER_EXPIRED || CHAR_TRANSMIT < eventid ) {
-    return ERR_INVALID_EVENT;
-  }
+  //if ( eventid < TIMER_EXPIRED || CHAR_TRANSMIT < eventid ) {
+  //  return ERR_INVALID_EVENT;
+  //}
 
-  current_task->awaiting_event_id = eventid;
+  current_task->awaiting_event_id = intr;
   SetCurrentTaskState( EVENT_BLOCKED );
 
-  EnableInterruptForEvent( eventid );
+  EnableInterrupt( intr );
 
   return RETURN_STATUS_OK;
 }
 
-void UnblockTaskWaitingOnEvent( enum SystemEvent event ) {
-  Debugln( "UnblockTaskWaitingOnEvent (%d)", event );
+void UnblockTasksWaitingOnEvent( int intr ) {
+  Debugln( "UnblockTasksWaitingOnEvent (0x%08x)", intr );
 
   struct priority_task_queue *event_blocked = &scheduler.states[EVENT_BLOCKED];
 
   for ( int prio = HIGHEST_PRIORITY; prio < NUM_PRIORITIES; prio++ ) {
     struct task *head = ( struct task* )event_blocked->priorities[prio].last;
     while ( head ) {
-      if ( head->awaiting_event_id == event ) {
-        SetTaskState( head->tid, READY );
-        SetTaskReturnValue( head->tid, ERR_COLLECT_DATA_AND_REENABLE_INTERRUPTS );
-        return;
-      }
+      int tid = head->tid;
+      int awaiting = head->awaiting_event_id;
       head = ( struct task* )head->prev;
+      Debugln( "old head: %d, new head: %d", tid, head ? head->tid : -1 );
+      if ( awaiting == intr ) {
+        Debugln( "Unblocking task %d", tid );
+        SetTaskState( tid, READY );
+        SetTaskReturnValue( tid, ERR_COLLECT_DATA_AND_REENABLE_INTERRUPTS );
+        break;
+      }
     }
   }
 }
@@ -221,9 +225,6 @@ void HandleIrq( int32_t intr_code ) {
       DisableInterrupt( intr );
     }
 
-    const int event = InterruptToSystemEvent( intr );
-    if ( event != -1 ) {
-      UnblockTaskWaitingOnEvent( event );
-    }
+    UnblockTasksWaitingOnEvent( intr );
   }
 }

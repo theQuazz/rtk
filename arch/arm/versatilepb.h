@@ -31,7 +31,9 @@
 #define UARTIMSC      0x0E /* 0x38 bytes */
 #define UARTICR       0x11 /* 0x44 bytes */
 #define UARTFR_RXFE   0x10
+#define UARTFR_RXFF   0x40
 #define UARTFR_TXFF   0x20
+#define UARTFR_TXFE   0x80
 #define UARTIMSC_RXIM 0x10
 #define UARTIMSC_TXIM 0x20
 #define UARTICR_RXIC  0x10
