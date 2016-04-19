@@ -47,9 +47,9 @@ int SendProxy( int tid, void *msg, int msglen, void *reply, int replylen ) {
 
   EnqueueQueue( &msg_queues[tid], node );
 
-  SetCurrentTaskState( SEND_BLOCKED );
+  SetCurrentTaskState( RECEIVE_BLOCKED );
 
-  if ( GetTaskState( tid ) == RECEIVE_BLOCKED ) {
+  if ( GetTaskState( tid ) == SEND_BLOCKED ) {
     Debugln( "Task %d awaiting message, resuming", tid );
 
     struct msg_queue_node *receiver_node = &nodes[tid];
@@ -72,7 +72,7 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
   if ( ! msg_queues[mytid].first ) {
     Debugln( "No messages in queue, waiting" );
 
-    SetCurrentTaskState( RECEIVE_BLOCKED );
+    SetCurrentTaskState( SEND_BLOCKED );
 
     struct msg_queue_node n;
     n.put_tid = tid;
