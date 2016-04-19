@@ -28,24 +28,10 @@ struct task_sorted_list_node {
   int tid;
 };
 
-void TimerNotifier( void ) {
-  const int parent_tid = MyParentTid();
-
-  struct ClockRequest req = {
-    .type = CS_TICK,
-  };
-
-  for ( ;; ) {
-    AwaitEvent( TIMER_EXPIRED );
-    Debugln( "TIMER_EXPIRED" );
-    Send( parent_tid, &req, sizeof( req ), NULL, 0 );
-  }
-}
-
 int Delay( int num_ticks ) {
-  const int parent_tid = WhoIs( "clock-server" );
+  const int cs_tid = WhoIs( "clock-server" );
 
-  if ( parent_tid < 0 ) {
+  if ( cs_tid < 0 ) {
     return ERR_INVALID_CLOCKSERVER_TID;
   }
 
@@ -54,15 +40,15 @@ int Delay( int num_ticks ) {
     .data = num_ticks,
   };
 
-  Send( parent_tid, &req, sizeof( req ), NULL, 0 );
+  Send( cs_tid, &req, sizeof( req ), NULL, 0 );
 
   return RETURN_STATUS_OK;
 }
 
 int DelayUntil( int num_ticks ) {
-  const int parent_tid = WhoIs( "clock-server" );
+  const int cs_tid = WhoIs( "clock-server" );
 
-  if ( parent_tid < 0 ) {
+  if ( cs_tid < 0 ) {
     return ERR_INVALID_CLOCKSERVER_TID;
   }
 
@@ -71,15 +57,15 @@ int DelayUntil( int num_ticks ) {
     .data = num_ticks,
   };
 
-  Send( parent_tid, &req, sizeof( req ), NULL, 0 );
+  Send( cs_tid, &req, sizeof( req ), NULL, 0 );
 
   return RETURN_STATUS_OK;
 }
 
 int Time( void ) {
-  const int parent_tid = WhoIs( "clock-server" );
+  const int cs_tid = WhoIs( "clock-server" );
 
-  if ( parent_tid < 0 ) {
+  if ( cs_tid < 0 ) {
     return ERR_INVALID_CLOCKSERVER_TID;
   }
 
@@ -89,9 +75,23 @@ int Time( void ) {
 
   int time;
 
-  Send( parent_tid, &req, sizeof( req ), &time, sizeof( time ) );
+  Send( cs_tid, &req, sizeof( req ), &time, sizeof( time ) );
 
   return time;
+}
+
+void TimerNotifier( void ) {
+  const int server_tid = MyParentTid();
+
+  struct ClockRequest req = {
+    .type = CS_TICK,
+  };
+
+  for ( ;; ) {
+    AwaitEvent( PIC_TIMER01 );
+    Debugln( "TIMER_EXPIRED" );
+    Send( server_tid, &req, sizeof( req ), NULL, 0 );
+  }
 }
 
 void ClockServer( void ) {
