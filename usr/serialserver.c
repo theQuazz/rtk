@@ -198,7 +198,7 @@ void SerialServer( void ) {
     .num_els = 0,
   };
 
-  int waiting_on_receive = 0;
+  bool waiting_on_receive = false;
   bool waiting_on_transmit = true;
 
   Debugln( "SerialServer ready" );
@@ -214,8 +214,8 @@ void SerialServer( void ) {
           Reply( received_notifier_tid, NULL, 0 );
         }
 
-        if ( waiting_on_receive > 0 ) {
-          waiting_on_receive--;
+        if ( waiting_on_receive ) {
+          waiting_on_receive = false;
           Reply( receiver_tid, &req.data, sizeof( req.data ) );
         }
         else {
