@@ -5,6 +5,6 @@ enum {
   SS_BUFFER_SIZE = 128,
 };
 
-void SerialServer( void );
+void SerialInit( void );
 
 #endif

@@ -22,7 +22,4 @@ void TransmitChar( int channel, char c );
 void TimersInit( void );
 void UartsInit( void );
 
-void bwputc( char c );
-char bwgetc( void );
-
 #endif

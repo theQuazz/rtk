@@ -17,8 +17,7 @@
 
 void SsTest( void ) {
   for ( int i = 0; ; i++ ) {
-    char ch = Getc( 1 );
-    Putc( 1, ch );
+    Print( 0, "%d:%c ", i, Getc( 0 ) );
   }
 }
 
@@ -37,8 +36,7 @@ void Init( void ) {
   // Create( MEDIUM_PRIORITY, RpsClient );
   Create( HIGH_PRIORITY, ClockServer );
   // Create( MEDIUM_PRIORITY, usr1 );
-
-  Create( HIGH_PRIORITY, SerialServer );
+  Create( HIGH_PRIORITY, SerialInit );
   Create( LOW_PRIORITY, SsTest );
   //Create( HIGHEST_PRIORITY, SsTest );
   //Create( HIGHEST_PRIORITY, SsTest );

@@ -1,6 +1,7 @@
 #include "versatilepb.h"
 #include "../../kernel/system.h"
 #include "../../include/interrupt.h"
+#include "../../include/io.h"
 #include "../../lib/debug.h"
 
 #include <stdbool.h>
@@ -45,12 +46,12 @@ void TimersInit( void ) {
   *( TIMER0 + TIMER_CONTROL ) = TIMER_EN | TIMER_PERIODIC | TIMER_32BIT | TIMER_INTEN;
 }
 
-void bwputc( char c ) {
-  while ( *( UART1 + UARTFR ) & UARTFR_TXFF ) {}
-  *UART1 = c;
+void bwputc( volatile unsigned int *uart, char c ) {
+  while ( *( uart + UARTFR ) & UARTFR_TXFF ) {}
+  *uart = c;
 }
 
-char bwgetc( void ) {
-  while ( *( UART1 + UARTFR ) & UARTFR_RXFE ) {}
-  return *UART1;
+char bwgetc( volatile unsigned int *uart ) {
+  while ( *( uart + UARTFR ) & UARTFR_RXFE ) {}
+  return *uart;
 }

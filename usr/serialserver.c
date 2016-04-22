@@ -7,16 +7,27 @@
 #include "../include/clockserver.h"
 #include "../lib/cyclicbuffer.h"
 #include "../lib/debug.h"
+#include "../lib/string.h"
 #include "../arch/arm/versatilepb.h"
 
 #include <stddef.h>
 
-#define DebugCyclicBufferInspect( c ) \
-  Debugln( "#<CyclicBuffer:%d size=%d data_size=%d data=%d start=%d num_els=%d>", (c), (c)->size, (c)->data_size, (c)->data, (c)->start, (c)->num_els );
+enum SerialConfigType {
+  SS_CONFIG,
+};
+
+struct SerialConfig {
+  struct BaseMsg;
+  unsigned int pic_reg;
+  volatile unsigned int *uart;
+  unsigned int channel;
+  int server_tid;
+  int courier_tid;
+  int notifier_tid;
+};
 
 enum SerialRequestType {
-  SS_RECEIVED,
-  SS_TRANSMITTED,
+  SS_NOTIFIER,
   SS_TRANSMIT,
   SS_RECEIVE,
 };
@@ -26,19 +37,30 @@ struct SerialRequest {
   char data;
 };
 
+static char TRANSMIT_FMT[] = "transmit::%d";
+static char RECEIVE_FMT[] = "receive::%d";
+
+static volatile unsigned int *uarts[] = {
+  UART0,
+  UART1,
+  UART2,
+};
+
 int Putc( int channel, char ch ) {
-  if ( channel == 0 ) {
-    bwputc( ch );
+  if ( channel == 2 ) {
+    bwputc( uarts[channel], ch );
     return 0;
   }
 
-  const int serial_tid = WhoIs( "io-transmitter" );
+  char whois[sizeof( TRANSMIT_FMT )];
+  Fmt( whois, TRANSMIT_FMT, channel );
+
+  const int serial_tid = WhoIs( whois );
 
   if ( serial_tid < 0 ) {
     return ERR_INVALID_SERIAL_SERVER_TID;
   }
 
-  Debugln( "wtf %c", ch );
   struct SerialRequest req = {
     .type = SS_TRANSMIT,
     .data = ch,
@@ -49,11 +71,14 @@ int Putc( int channel, char ch ) {
 }
 
 int Getc( int channel ) {
-  if ( channel == 0 ) {
-    return bwgetc();
+  if ( channel == 2 ) {
+    return bwgetc( uarts[channel] );
   }
 
-  const int serial_tid = WhoIs( "io-receiver" );
+  char whois[sizeof( RECEIVE_FMT )];
+  Fmt( whois, RECEIVE_FMT, channel );
+
+  const int serial_tid = WhoIs( whois );
 
   if ( serial_tid < 0 ) {
     return ERR_INVALID_SERIAL_SERVER_TID;
@@ -69,116 +94,106 @@ int Getc( int channel ) {
   return ch;
 }
 
-void ReceivedNotifier( void ) {
-  const int serial_tid = MyParentTid();
+void ReceiveSecretary( void ) {
+  struct SerialConfig config;
+  int server_tid;
 
-  struct SerialRequest req = {
-    .type = SS_RECEIVED,
-  };
+  Receive( &server_tid, &config, sizeof( config ) );
+  Reply( server_tid, NULL, 0 );
 
-  *( UART0 + UARTIMSC ) |= UARTIMSC_RXIM;
+  char registration[sizeof( RECEIVE_FMT )];
+  Fmt( registration, RECEIVE_FMT, config.channel );
 
-  for ( ;; ) {
-    AwaitEvent( PIC_UART0 );
-    if ( *( UART0 + UARTFR ) & UARTFR_RXFF ) {
-      *( UART0 + UARTICR ) = UARTICR_RXIC;
-      req.data = *UART0;
-      Debugln( "CHAR_RECEIVED (%c)", req.data );
-      Send( serial_tid, &req, sizeof( req ), NULL, 0 );
-    }
-    else {
-      Pass();
-    }
-  }
-}
+  Debugln( "ReceiveSecretary registering as %s", registration );
 
-void TransmittedNotifier( void ) {
-  int courier;
-
-  *( UART0 + UARTIMSC ) |= UARTIMSC_TXIM;
-
-  Receive( &courier, NULL, 0 );
-  Reply( courier, NULL, 0 );
-
-  for ( ;; ) {
-    char ch;
-    Receive( &courier, &ch, sizeof ( ch ) );
-    Debugln( "outputting %c", ch );
-    *UART0 = ch;
-
-    for ( ;; ) {
-      AwaitEvent( PIC_UART0 );
-
-      if ( *( UART0 + UARTFR ) & UARTFR_TXFE ) {
-        *( UART0 + UARTICR ) = UARTICR_TXIC;
-        Debugln( "CHAR_TRANSMIT" );
-        Reply( courier, NULL, 0 );
-        break;
-      }
-    }
-  }
-}
-
-void TransmittedCourier( void ) {
-  int notifier;
-  int server;
-
-  Receive( &server, &notifier, sizeof( notifier) );
-  Send( notifier, NULL, 0, NULL, 0 );
-  Reply( server, NULL, 0 );
-
-  struct SerialRequest req = {
-    .type = SS_TRANSMITTED,
-  };
-
-  char res; 
-
-  for ( ;; ) {
-    Send( server, &req, sizeof( req ), &res, sizeof( res ) );
-    Send( notifier, &res, sizeof( res ), NULL, 0 );
-  }
-}
-
-void SerialServerReceiver( void ) {
-  int serial_tid = MyParentTid();
-
-  while ( RegisterAs( "io-receiver" ) == ERR_INVALID_NAMESERVER_TID );
+  while ( RegisterAs( registration ) == ERR_INVALID_NAMESERVER_TID );
 
   for ( ;; ) {
     int sender_tid;
     struct SerialRequest req;
     char res;
     Receive( &sender_tid, &req, sizeof( req ) );
-    Send( serial_tid, &req, sizeof( req ), &res, sizeof( res ) );
+    Send( server_tid, &req, sizeof( req ), &res, sizeof( res ) );
     Reply( sender_tid, &res, sizeof( res ) );
   }
 }
 
-void SerialServerTransmitter( void ) {
-  int serial_tid = MyParentTid();
+void TransmitSecretary( void ) {
+  struct SerialConfig config;
+  int server_tid;
 
-  while ( RegisterAs( "io-transmitter" ) == ERR_INVALID_NAMESERVER_TID );
+  Receive( &server_tid, &config, sizeof( config ) );
+  Reply( server_tid, NULL, 0 );
+
+  char registration[sizeof( TRANSMIT_FMT )];
+  Fmt( registration, TRANSMIT_FMT, config.channel );
+
+  Debugln( "TransmitSecretary registering as %s", registration );
+
+  while ( RegisterAs( registration ) == ERR_INVALID_NAMESERVER_TID );
 
   for ( ;; ) {
     int sender_tid;
     struct SerialRequest req;
     Receive( &sender_tid, &req, sizeof( req ) );
-    Send( serial_tid, &req, sizeof( req ), NULL, 0 );
+    Send( server_tid, &req, sizeof( req ), NULL, 0 );
     Reply( sender_tid, NULL, 0 );
   }
 }
 
+void Notifier( void ) {
+  struct SerialConfig config;
+  int courier;
+
+  Receive( &courier, &config, sizeof( config ) );
+  Reply( courier, NULL, 0 );
+
+  *( config.uart + UARTIMSC ) |= UARTIMSC_RXIM;
+  *( config.uart + UARTIMSC ) |= UARTIMSC_TXIM;
+
+  for ( ;; ) {
+    Receive( &courier, NULL, 0 );
+    AwaitEvent( config.pic_reg );
+    Reply( courier, NULL, 0 );
+  }
+}
+
+void Courier( void ) {
+  struct SerialConfig config;
+  int server_tid;
+
+  Receive( &server_tid, &config, sizeof( config ) );
+  Send( config.notifier_tid, &config, sizeof( config ), NULL, 0 );
+  Reply( server_tid, NULL, 0 );
+
+  struct SerialRequest req = {
+    .type = SS_NOTIFIER,
+  };
+
+  for ( ;; ) {
+    Send( config.notifier_tid, NULL, 0, NULL, 0 );
+    Send( server_tid, &req, sizeof( req ), NULL, 0 );
+  }
+}
+
 void SerialServer( void ) {
+  struct SerialConfig config;
+
   Debugln( "SerialServer starting" );
 
-  int received_notifier_tid = Create( HIGHEST_PRIORITY, ReceivedNotifier );
-  int receiver_tid = Create( HIGH_PRIORITY, SerialServerReceiver );
+  int sender_tid;
+  Receive( &sender_tid, &config, sizeof( config ) );
+  Reply( sender_tid, NULL, 0 );
 
-  int transmitted_notifier_tid = Create( HIGHEST_PRIORITY, TransmittedNotifier );
-  int transmitted_courier_tid = Create( HIGH_PRIORITY, TransmittedCourier );
-  int transmitter_tid = Create( HIGH_PRIORITY, SerialServerTransmitter );
+  int notifier_tid = Create( HIGHEST_PRIORITY, Notifier );
+  int courier_tid = Create( HIGH_PRIORITY, Courier );
+  int transmit_tid = Create( MEDIUM_PRIORITY, TransmitSecretary );
+  int receive_tid = Create( MEDIUM_PRIORITY, ReceiveSecretary );
 
-  Send( transmitted_courier_tid, &transmitted_notifier_tid, sizeof( transmitted_notifier_tid ), NULL, 0 );
+  config.notifier_tid = notifier_tid;
+  Send( courier_tid, &config, sizeof( config ), NULL, 0 );
+  Send( transmit_tid, &config, sizeof( config ), NULL, 0 );
+  Send( receive_tid, &config, sizeof( config ), NULL, 0 );
 
   char tbuffer[128];
   struct cyclic_buffer transmit_buffer = {
@@ -198,10 +213,10 @@ void SerialServer( void ) {
     .num_els = 0,
   };
 
-  bool waiting_on_receive = false;
-  bool waiting_on_transmit = true;
+  bool awaiting_receive = false;
+  bool awaiting_transmit = false;
 
-  Debugln( "SerialServer ready" );
+  Debugln( "SerialServer UART(0x%08x) ready", config.uart );
 
   for ( ;; ) {
     struct SerialRequest req;
@@ -209,17 +224,38 @@ void SerialServer( void ) {
     Receive( &from_tid, &req, sizeof( req ) );
 
     switch ( req.type ) {
-      case SS_RECEIVED: {
-        if ( ! IsCyclicBufferFull( &receive_buffer ) ) {
-          Reply( received_notifier_tid, NULL, 0 );
+      case SS_NOTIFIER: {
+        Reply( courier_tid, NULL, 0 );
+
+        if ( *( config.uart + UARTFR ) & UARTFR_RXFF ) { // RECEIVED
+          *( config.uart + UARTICR ) = UARTICR_RXIC;
+          char recv = *config.uart;
+
+          if ( awaiting_receive ) {
+            awaiting_receive = false;
+            Reply( receive_tid, &recv, sizeof( recv ) );
+          }
+          else {
+            CyclicBufferPush( &receive_buffer, &recv );
+          }
         }
 
-        if ( waiting_on_receive ) {
-          waiting_on_receive = false;
-          Reply( receiver_tid, &req.data, sizeof( req.data ) );
-        }
-        else {
-          CyclicBufferPush( &receive_buffer, &req.data );
+        if ( awaiting_transmit && *( config.uart + UARTFR ) & UARTFR_TXFE ) { // TRANSMITTED
+          *( config.uart + UARTICR ) = UARTICR_TXIC;
+          awaiting_transmit = false;
+
+          if ( IsCyclicBufferEmpty( &transmit_buffer ) ) {
+            awaiting_transmit = false;
+          }
+          else {
+            bool was_full = IsCyclicBufferFull( &transmit_buffer );
+
+            CyclicBufferPop( &transmit_buffer, ( char* )config.uart );
+
+            if ( was_full ) {
+              Reply( transmit_tid, NULL, 0 );
+            }
+          }
         }
 
         break;
@@ -227,55 +263,26 @@ void SerialServer( void ) {
 
       case SS_RECEIVE: {
         if ( IsCyclicBufferEmpty( &receive_buffer ) ) {
-          waiting_on_receive += 1;
+          awaiting_receive = true;
         }
         else {
-          bool was_full = IsCyclicBufferFull( &receive_buffer );
-
           char tmp;
           CyclicBufferPop( &receive_buffer, &tmp );
-          Reply( receiver_tid, &tmp, sizeof( tmp ) );
-
-          if ( was_full ) {
-            Reply( received_notifier_tid, NULL, 0 );
-          }
-        }
-
-        break;
-      }
-
-      case SS_TRANSMITTED: {
-        if ( IsCyclicBufferEmpty( &transmit_buffer ) ) {
-          waiting_on_transmit = true;
-        }
-        else {
-          bool was_full = IsCyclicBufferFull( &transmit_buffer );
-
-          char tmp;
-          CyclicBufferPop( &transmit_buffer, &tmp );
-          Reply( transmitted_courier_tid, &tmp, tmp );
-
-          if ( was_full ) {
-            Reply( transmitter_tid, NULL, 0 );
-          }
+          Reply( receive_tid, &tmp, sizeof( tmp ) );
         }
 
         break;
       }
 
       case SS_TRANSMIT: {
-        Debugln( "got %c from %d", req.data, from_tid );
         CyclicBufferPush( &transmit_buffer, &req.data );
         if ( ! IsCyclicBufferFull( &transmit_buffer ) ) {
-          Reply( transmitter_tid, NULL, 0 );
+          Reply( transmit_tid, NULL, 0 );
         }
 
-        if ( waiting_on_transmit ) {
-          char tmp;
-          waiting_on_transmit = false;
-          CyclicBufferPop( &transmit_buffer, &tmp );
-          Debugln( "sending %c to courier", tmp );
-          Reply( transmitted_courier_tid, &tmp, sizeof( tmp ) );
+        if ( ! awaiting_transmit ) {
+          awaiting_transmit = true;
+          CyclicBufferPop( &transmit_buffer, ( char* )UART0 );
         }
 
         break;
@@ -284,4 +291,33 @@ void SerialServer( void ) {
       default: break;
     }
   }
+}
+
+void SerialInit( void ) {
+  struct SerialConfig uart0 = {
+    .type = SS_CONFIG,
+    .pic_reg = PIC_UART0,
+    .uart = UART0,
+    .channel = 0,
+  };
+  int uart0_tid = Create( HIGH_PRIORITY, SerialServer );
+  Send( uart0_tid, &uart0, sizeof( uart0 ), NULL, 0 );
+
+  struct SerialConfig uart1 = {
+    .type = SS_CONFIG,
+    .pic_reg = PIC_UART1,
+    .uart = UART1,
+    .channel = 1,
+  };
+  int uart1_tid = Create( HIGH_PRIORITY, SerialServer );
+  Send( uart1_tid, &uart1, sizeof( uart1 ), NULL, 0 );
+
+  //struct SerialConfig uart2 = {
+  //  .type = SS_CONFIG,
+  //  .pic_reg = PIC_UART2,
+  //  .uart = UART2,
+  //  .channel = 2,
+  //};
+  //int uart2_tid = Create( HIGH_PRIORITY, SerialServer );
+  //Send( uart2_tid, &uart2, sizeof( uart2 ), NULL, 0 );
 }

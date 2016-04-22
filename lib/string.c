@@ -14,6 +14,14 @@ size_t strnlen( const char *str, size_t num ) {
   return ret;
 }
 
+char *strcpy( char *dest, const char *src ) {
+  char *dst = dest;
+
+  while (( *dst++ = *src++ ));
+
+  return dest;
+}
+
 char *strncpy( char *dest, const char *src, size_t n ) {
   char *dst = dest;
 
