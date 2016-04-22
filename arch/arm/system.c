@@ -9,7 +9,6 @@
 
 void SystemInit( void ) {
   TimersInit();
-  UartsInit();
 }
 
 bool IsTimerInterrupt( uint32_t intr ) {
@@ -36,8 +35,6 @@ void DisableInterrupt( uint32_t intr ) {
 void EnableInterrupt( int intr ) {
   Debugln( "ENABLING INTERRUPT 0x%08x", intr );
   *( PIC + VIC_INTENABLE ) = intr;
-}
-void UartsInit( void ) {
 }
 
 void TimersInit( void ) {

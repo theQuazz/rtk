@@ -21,8 +21,6 @@ struct SerialConfig {
   unsigned int pic_reg;
   volatile unsigned int *uart;
   unsigned int channel;
-  int server_tid;
-  int courier_tid;
   int notifier_tid;
 };
 

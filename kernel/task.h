@@ -81,7 +81,7 @@ bool IsValidTid( int tid );
 
 bool IsTaskAlive( int tid );
 
-int AwaitEventHandler( int eventid );
+int AwaitEventHandler( int intr );
 
 void UnblockTaskWaitingOnEvent( int intr );
 

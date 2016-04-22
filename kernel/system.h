@@ -15,11 +15,7 @@ bool TimerWentOff( void );
 void ClearTimerInterrupt( void );
 void DisableInterrupt( uint32_t intr );
 uint32_t GetTimerTime( void );
-int InterruptToSystemEvent( uint32_t intr );
-void EnableInterruptForEvent( int event );
-char GetReceivedChar( int channel );
-void TransmitChar( int channel, char c );
+void EnableInterrupt( int intr );
 void TimersInit( void );
-void UartsInit( void );
 
 #endif
