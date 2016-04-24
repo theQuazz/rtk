@@ -100,7 +100,7 @@ void ClockServer( void ) {
 
   Create( HIGHEST_PRIORITY, TimerNotifier );
 
-  struct task_sorted_list_node nodes[1024];
+  struct task_sorted_list_node nodes[MAX_TASKS];
   struct sorted_list_node *delayed_queue = NULL;
 
   int num_ticks = 0;

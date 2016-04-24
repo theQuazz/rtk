@@ -10,6 +10,7 @@ void RtkLaunch(void) {
   SystemInit();
 
   /* Initialize Modules */
+  InitTasks();
   InitCommunication();
 
   /* Initialize Null & Init Tasks */

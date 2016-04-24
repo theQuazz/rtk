@@ -1,9 +1,9 @@
 #include "math.h"
 
-int min( int a, int b ) {
+long min( long a, long b ) {
   return a < b ? a : b;
 }
 
-int max( int a, int b ) {
+long max( long a, long b ) {
   return a > b ? a : b;
 }

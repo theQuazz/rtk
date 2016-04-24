@@ -13,6 +13,7 @@ irq_entry:
 	sub a1, a1, #31
   mov lr, pc
   ldr pc, =HandleIrq
+  mov a4, r0
 
 	/* Save user state */
 	msr CPSR_c, #0xDF /* System mode */
@@ -23,7 +24,6 @@ irq_entry:
 	mrs a1, SPSR
 
 	msr CPSR_c, #0xD3 /* Supervisor mode */
-  mov a4, #0 /* Ran till quantum ran out */
 	mov lr, pc
 	ldr pc, =SaveTaskState
 
@@ -41,8 +41,9 @@ svc_entry:
   push {r0-r9}
   mov lr, pc
   ldr pc, =GetTimerTime
-  mov ip, r0
+  mov r11, r0
   pop {r0-r9}
+  push {r11}
 
   /* Call svc */
   push {r4-r9}
@@ -56,7 +57,7 @@ svc_entry:
   mov a2, sp
 	msr CPSR_c, #0xD3 /* Supervisor mode */
 
-  mov a4, ip
+  pop {a4}
 	mrs a1, SPSR
 	mov lr, pc
 	ldr pc, =SaveTaskState

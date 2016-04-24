@@ -89,7 +89,7 @@ void RpsServer( void ) {
   RegisterAs( "rps-server" );
 
   struct RpsGame *unmatched = NULL;
-  struct RpsGame games[1024];
+  struct RpsGame games[MAX_TASKS];
 
   for ( ;; ) {
     union {
@@ -250,20 +250,20 @@ void RpsCmdServer( void ) {
       ret = RpsPlay( RPS_SCISSORS );
     }
     else {
-      Print( 0, "Invalid invocation\n" );
+      Print( 0, "Invalid invocation\r\n" );
     }
 
     switch ( ret ) {
       case RPS_WIN:
-        Print( 0, "win\n" );
+        Print( 0, "win\r\n" );
         ret = 0;
         break;
       case RPS_LOSS:
-        Print( 0, "loss\n" );
+        Print( 0, "loss\r\n" );
         ret = 0;
         break;
       case RPS_TIE:
-        Print( 0, "tie\n" );
+        Print( 0, "tie\r\n" );
         ret = 0;
         break;
       default:

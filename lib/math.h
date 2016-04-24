@@ -1,7 +1,7 @@
 #ifndef __MATH_H__
 #define __MATH_H__
 
-int min( int a, int b );
-int max( int a, int b );
+long min( long a, long b );
+long max( long a, long b );
 
 #endif

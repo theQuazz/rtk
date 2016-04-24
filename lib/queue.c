@@ -1,35 +1,35 @@
 #include "queue.h"
 
 void EnqueueQueue( struct queue *queue, struct queue_node *node) {
-  if ( ! queue->last ) {
-    queue->last = node;
+  if ( ! queue->first ) {
+    queue->first = node;
   }
 
-  if ( queue->first ) {
-    queue->first->prev = node;
+  if ( queue->last ) {
+    queue->last->next = node;
   }
 
-  node->next = queue->first;
-  node->prev = NULL;
-  queue->first = node;
+  node->prev = queue->last;
+  node->next = NULL;
+  queue->last = node;
 }
 
 struct queue_node *DequeueQueue( struct queue *queue ) {
-  struct queue_node *dequeued = queue->last;
+  struct queue_node *dequeued = queue->first;
 
   if ( ! dequeued ) {
     return NULL;
   }
 
-  if ( dequeued->prev ) {
-    dequeued->prev->next = NULL;
+  if ( dequeued->next ) {
+    dequeued->next->prev = NULL;
   }
 
-  if ( queue->first == dequeued ) {
-    queue->first = NULL;
+  if ( queue->last == dequeued ) {
+    queue->last = NULL;
   }
 
-  queue->last = dequeued->prev;
+  queue->first = dequeued->next;
 
   dequeued->next = dequeued->prev = NULL;
 

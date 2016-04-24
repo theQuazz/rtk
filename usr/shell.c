@@ -3,6 +3,7 @@
 #include "../include/nameserver.h"
 #include "../include/task.h"
 #include "../include/io.h"
+#include "../include/clockserver.h"
 #include "../lib/string.h"
 #include "../lib/print.h"
 #include "../lib/debug.h"
@@ -10,7 +11,7 @@
 
 #include <stddef.h>
 
-static void Handle( char *buffer, size_t buffer_len, int *ret ) {
+static void Handle( int channel, char *buffer, size_t buffer_len, int *ret ) {
   int command_len = strcspn( buffer, " " );
   char command_buf[command_len + 1];
 
@@ -22,11 +23,11 @@ static void Handle( char *buffer, size_t buffer_len, int *ret ) {
 
   switch ( handler_tid ) {
     case ERR_INVALID_NAMESERVER_TID: {
-      Print( 0, "Can't connect to NameServer\n" );
+      Print( channel, "Can't connect to NameServer\r\n" );
       break;
     }
     case ERR_LOOKUP_FAILED: {
-      Print( 0, "Command not found: %s\n", command_buf );
+      Print( channel, "Command not found: %s\r\n", command_buf );
       break;
     }
     default: {
@@ -34,11 +35,11 @@ static void Handle( char *buffer, size_t buffer_len, int *ret ) {
       switch ( err ) {
         case ERR_SEND_IMPOSSIBLE_TID:
         case ERR_SEND_NONEXISTENT_TASK: {
-          Print( 0, "Task disappeared before receiving command" );
+          Print( channel, "Task disappeared before receiving command\r\n" );
           break;
         }
         case ERR_SRR_INCOMPLETE: {
-          Print( 0, "Internal error... exiting" );
+          Print( channel, "Internal error... exiting\r\n" );
           Exit();
         }
         default: break;
@@ -48,7 +49,7 @@ static void Handle( char *buffer, size_t buffer_len, int *ret ) {
   }
 }
 
-static void Repl( struct ShellConfig * config ) {
+static void Repl( struct ShellConfig *config ) {
   char buffer[config->command_buffer_size];
   int buffer_pos = 0;
   int length = 0;
@@ -57,17 +58,18 @@ static void Repl( struct ShellConfig * config ) {
   prompt_loop:
   for ( ;; ) {
     if ( ret != 0 ) {
-      Print( 0, "(%s%d%s) ", TERM_YELLOW, ret, TERM_RESET );
+      Print( config->channel, "(%s%d%s) ", TERM_YELLOW, ret, TERM_RESET );
     }
-    Print( 0, "%s%s%s", ret == 0 ? TERM_GREEN : TERM_RED, config->prompt, TERM_RESET );
+    Print( config->channel, "%s%s%s", ret == 0 ? TERM_GREEN : TERM_RED, config->prompt, TERM_RESET );
 
     for ( ;; ) {
-      char ch = Getc( 0 );
+      char ch = Getc( config->channel );
       switch ( ch ) {
         /* return */
         case '\r':
         case '\n': {
-          Putc( 0, '\n' );
+          Putc( config->channel, '\r' );
+          Putc( config->channel, '\n' );
 
           int orig_length = length;
           ret = buffer_pos = length = 0;
@@ -77,37 +79,45 @@ static void Repl( struct ShellConfig * config ) {
           }
 
           if ( strcmp( buffer, "exit" ) == 0 ) {
-            Print( 0, "exit...\n" );
+            Print( config->channel, "exit...\r\n" );
             Exit();
           }
 
-          Handle( buffer, sizeof( buffer ), &ret );
+          Handle( config->channel, buffer, sizeof( buffer ), &ret );
+
+          goto prompt_loop;
+        }
+
+        case '\f': {
+          Print( config->channel, TERM_MOVE_UPPER_LEFT );
+          Print( config->channel, TERM_CLEAR );
+          Print( config->channel, TERM_RESET );
 
           goto prompt_loop;
         }
 
         /* arrow key */
         case '\033': {
-          Getc( 0 ); /* skip the [ */
-          char dir = Getc( 0 );
+          Getc( config->channel ); /* skip the [ */
+          char dir = Getc( config->channel );
           switch ( dir ) {
             case 'A' /* up */: break;
             case 'B' /* down */: break;
             case 'C' /* right */: {
               if ( buffer_pos < length ) {
                 buffer_pos += 1;
-                Putc( 0, ch );
-                Putc( 0, '[');
-                Putc( 0, 'C');
+                Putc( config->channel, ch );
+                Putc( config->channel, '[');
+                Putc( config->channel, 'C');
               }
               break;
             }
             case 'D' /* left */: {
               if ( buffer_pos > 0 ) {
                 buffer_pos -= 1;
-                Putc( 0, ch );
-                Putc( 0, '[');
-                Putc( 0, 'D');
+                Putc( config->channel, ch );
+                Putc( config->channel, '[');
+                Putc( config->channel, 'D');
               }
               break;
             }
@@ -118,8 +128,8 @@ static void Repl( struct ShellConfig * config ) {
         /* backspace */
         case 127: {
           if ( buffer_pos > 0 ) {
-            Print( 0, "\b%s ", buffer + buffer_pos );
-            Print( 0, TERM_MOVE_N_LEFT, length - buffer_pos + 1 );
+            Print( config->channel, "\b%s ", buffer + buffer_pos );
+            Print( config->channel, TERM_MOVE_N_LEFT, length - buffer_pos + 1 );
 
             if ( buffer_pos != length ) {
               memmove( buffer + buffer_pos - 1, buffer + buffer_pos, length - buffer_pos );
@@ -137,10 +147,10 @@ static void Repl( struct ShellConfig * config ) {
             break;
           }
 
-          Putc( 0, ch );
+          Putc( config->channel, ch );
           if ( buffer_pos < length ) {
-            Print( 0, "%s", buffer + buffer_pos );
-            Print( 0, TERM_MOVE_N_LEFT, length - buffer_pos );
+            Print( config->channel, "%s", buffer + buffer_pos );
+            Print( config->channel, TERM_MOVE_N_LEFT, length - buffer_pos );
             memmove( buffer + buffer_pos + 1, buffer + buffer_pos, length - buffer_pos );
           }
 
@@ -153,10 +163,10 @@ static void Repl( struct ShellConfig * config ) {
       buffer[length] = '\0';
 
       if ( buffer_pos == config->command_buffer_size - 1 ) {
-        Print( 0, TERM_HIDE_CURSOR );
+        Print( config->channel, TERM_HIDE_CURSOR );
       }
       else {
-        Print( 0, TERM_SHOW_CURSOR );
+        Print( config->channel, TERM_SHOW_CURSOR );
       }
     }
   }
@@ -172,7 +182,7 @@ void Shell( void ) {
 
   const int err = Receive( &sender_tid, &config, sizeof( config ) );
 
-  Debugln( "Shell (%d) received config from (%d), running!", my_tid, sender_tid );
+  Debugln( "Shell (%d) received config from (%d), running on channel (%d)!", my_tid, sender_tid, config.channel );
 
   Reply( sender_tid, NULL, 0 );
 

@@ -280,7 +280,7 @@ void SerialServer( void ) {
 
         if ( ! awaiting_transmit ) {
           awaiting_transmit = true;
-          CyclicBufferPop( &transmit_buffer, ( char* )UART0 );
+          CyclicBufferPop( &transmit_buffer, ( char* )config.uart );
         }
 
         break;
@@ -298,7 +298,7 @@ void SerialInit( void ) {
     .uart = UART0,
     .channel = 0,
   };
-  int uart0_tid = Create( HIGH_PRIORITY, SerialServer );
+  int uart0_tid = Create( GetMyPriority(), SerialServer );
   Send( uart0_tid, &uart0, sizeof( uart0 ), NULL, 0 );
 
   struct SerialConfig uart1 = {
@@ -307,15 +307,6 @@ void SerialInit( void ) {
     .uart = UART1,
     .channel = 1,
   };
-  int uart1_tid = Create( HIGH_PRIORITY, SerialServer );
+  int uart1_tid = Create( GetMyPriority(), SerialServer );
   Send( uart1_tid, &uart1, sizeof( uart1 ), NULL, 0 );
-
-  //struct SerialConfig uart2 = {
-  //  .type = SS_CONFIG,
-  //  .pic_reg = PIC_UART2,
-  //  .uart = UART2,
-  //  .channel = 2,
-  //};
-  //int uart2_tid = Create( HIGH_PRIORITY, SerialServer );
-  //Send( uart2_tid, &uart2, sizeof( uart2 ), NULL, 0 );
 }

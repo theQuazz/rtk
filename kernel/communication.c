@@ -6,11 +6,11 @@
 #include "../lib/debug.h"
 #include "../lib/math.h"
 
-static struct msg_queue_node nodes[TASK_MAX];
-static struct queue msg_queues[TASK_MAX];
+static struct msg_queue_node nodes[MAX_TASKS];
+static struct queue msg_queues[MAX_TASKS];
 
 void InitCommunication( void ) {
-  for ( int i = 0; i < TASK_MAX; i++ ) {
+  for ( int i = 0; i < MAX_TASKS; i++ ) {
     msg_queues[i].first = NULL;
     msg_queues[i].last = NULL;
   }

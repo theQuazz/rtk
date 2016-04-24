@@ -61,3 +61,45 @@ AwaitEvent:
 	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
   ldr r10, =AwaitEventHandler
   svc 0
+
+.type SetPriority %function
+.global SetPriority
+SetPriority:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =SetTaskPriority
+  svc 0
+
+.type GetPriority %function
+.global GetPriority
+GetPriority:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =GetTaskPriority
+  svc 0
+
+.type SetMyPriority %function
+.global SetMyPriority
+SetMyPriority:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =SetCurrentTaskPriority
+  svc 0
+
+.type GetMyPriority %function
+.global GetMyPriority
+GetMyPriority:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =GetCurrentTaskPriority
+  svc 0
+
+.type GetTasksStats %function
+.global GetTasksStats
+GetTasksStats:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =TasksStatsHandler
+  svc 0
+
+.type Destroy %function
+.global Destroy
+Destroy:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =DestroyHandler
+  svc 0

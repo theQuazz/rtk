@@ -14,7 +14,7 @@ void EchoServer( void ) {
     Receive( &sender_tid, buf, sizeof( buf ) );
 
     int offset = strcspn( buf, " " ) + 1;
-    Print( 0, "%s\n", buf + offset );
+    Print( 0, "%s\r\n", buf + offset );
 
     int ret = 0;
     Reply( sender_tid, &ret, sizeof( ret ) );

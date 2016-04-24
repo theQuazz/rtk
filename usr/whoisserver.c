@@ -20,7 +20,7 @@ void WhoIsServer( void ) {
     int ret = 0;
 
     if ( tid >= 0 ) {
-      Print( 0, "%d\n", tid );
+      Print( 0, "%d\r\n", tid );
     }
     else {
       ret = tid;

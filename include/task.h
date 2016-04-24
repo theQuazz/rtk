@@ -3,6 +3,10 @@
 
 #include "task_priority.h"
 
+enum {
+  MAX_TASKS = 1024,
+};
+
 /** @brief Instantiate a task
  *
  *  Create allocates and initializes a task descriptor, using the given
@@ -17,7 +21,7 @@
  *  @param code Entry point of the task
  *  @return Tid of new task or CreateError
  */
-int Create( enum Priority priority, void ( *code )( void ) );
+int Create( enum Priority priority, void ( *code )() );
 enum CreateError {
   ERR_INVALID_PRIORITY = -1,
   ERR_UNAVAILABLE_DESCRIPTOR = -2,
@@ -65,5 +69,79 @@ void Pass( void );
  */
 void Exit( void );
 
-#endif
+/** @brief Get current task's priority
+ *
+ *  GetMyPriority return the priority of the calling task
+ *
+ *  @return Priority of current task
+ */
+int GetMyPriority( void );
 
+/** @brief Set current task's priority
+ *
+ *  SetMyPriority return the priority of the calling task
+ *
+ *  @param to Priority to set it to
+ */
+void SetMyPriority( enum Priority to );
+
+/** @brief Get task priority
+ *
+ *  GetCurrentPriority return the priority of the calling task
+ *
+ *  @param tid Tid of task to get priority of
+ *  @return GetPriorityError or priority of task belonging to tid
+ */
+int GetPriority( int tid );
+enum GetPriorityError {
+  ERR_GET_PRIORITY_IMPOSSIBLE_TID = -1,
+  ERR_GET_PRIORITY_NONEXISTENT_TASK = -2,
+};
+
+/** @brief Set task priority
+ *
+ *  SetCurrentPriority return the priority of the calling task
+ *
+ *  @param tid Tid of task to get priority of
+ *  @param to Priority to set it to
+ *  @return SetPriorityError or priority of task belonging to tid
+ */
+int SetPriority( int tid, enum Priority to );
+enum SetPriorityError {
+  ERR_SET_PRIORITY_INVALID_PRIORITY = -1,
+  ERR_SET_PRIORITY_IMPOSSIBLE_TID = -2,
+  ERR_SET_PRIORITY_NONEXISTENT_TASK = -3,
+};
+
+/** @brief Destroy a task
+ *
+ *  @param tid The tid of the task to destroy
+ *  @return DestroyError or RETURN_STATUS_OK
+ */
+int Destroy( const int tid );
+enum DestroyError {
+  ERR_DESTROY_IMPOSSIBLE_TID = -1,
+  ERR_DESTROY_NONEXISTENT_TASK = -2,
+  ERR_NOT_CHILD = -3,
+};
+
+/** @brief Get all tasks stats
+ *
+ * @param container TasksStats container to put stats into
+ */
+
+struct TasksStats {
+  unsigned int num_tasks;
+  unsigned int num_alive_tasks;
+  struct TaskStats {
+    unsigned int tid;
+    enum Priority priority;
+    unsigned int state;
+    long num_activates;
+    unsigned long allowed_user_time;
+    unsigned long used_user_time;
+  } tasks[MAX_TASKS];
+};
+void GetTasksStats( struct TasksStats *container );
+
+#endif

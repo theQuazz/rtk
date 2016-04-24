@@ -6,7 +6,7 @@
 #include "task_queue.h"
 
 enum {
-  MSG_QUEUE_BUFFER_SLOTS = TASK_MAX,
+  MSG_QUEUE_BUFFER_SLOTS = MAX_TASKS,
 };
 
 struct msg_queue_node {

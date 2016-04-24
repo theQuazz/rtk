@@ -33,7 +33,7 @@ void RandServer( void ) {
     int errno = RandErrno();
 
     if ( errno == 0 ) {
-      Print( 0, "%d\n", randn );
+      Print( 0, "%d\r\n", randn );
     }
 
     Reply( sender_tid, &errno, sizeof( errno ) );
