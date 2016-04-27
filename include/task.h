@@ -125,6 +125,20 @@ enum DestroyError {
   ERR_NOT_CHILD = -3,
 };
 
+/** @brief Get task stats
+ *
+ * @param container TaskStats container to put stats into
+ */
+struct TaskStats {
+  unsigned int tid;
+  enum Priority priority;
+  unsigned int state;
+  long num_activates;
+  unsigned long allowed_user_time;
+  unsigned long used_user_time;
+};
+void GetTaskStats( int tid, struct TaskStats *container );
+
 /** @brief Get all tasks stats
  *
  * @param container TasksStats container to put stats into
@@ -133,14 +147,7 @@ enum DestroyError {
 struct TasksStats {
   unsigned int num_tasks;
   unsigned int num_alive_tasks;
-  struct TaskStats {
-    unsigned int tid;
-    enum Priority priority;
-    unsigned int state;
-    long num_activates;
-    unsigned long allowed_user_time;
-    unsigned long used_user_time;
-  } tasks[MAX_TASKS];
+  struct TaskStats tasks[MAX_TASKS];
 };
 void GetTasksStats( struct TasksStats *container );
 

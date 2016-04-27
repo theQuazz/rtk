@@ -90,6 +90,13 @@ GetMyPriority:
   ldr r10, =GetCurrentTaskPriority
   svc 0
 
+.type GetTaskStats %function
+.global GetTaskStats
+GetTaskStats:
+	push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
+  ldr r10, =TaskStatsHandler
+  svc 0
+
 .type GetTasksStats %function
 .global GetTasksStats
 GetTasksStats:
