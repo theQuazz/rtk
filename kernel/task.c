@@ -5,6 +5,9 @@
 #include "../lib/debug.h"
 #include "../lib/math.h"
 
+#include <limits.h>
+#include <stddef.h>
+
 #ifdef DEBUG
 #define DebugInspectTask( task ) \
   DebugPrint( "#<Task:0x%08x tid=%d priority=%d user_time=%lu last_activate_at=%lu num_activates=%ld>", task, task->tid, task->priority, task->used_user_time / 1000, task->last_activate_at, task->num_activates );
@@ -17,8 +20,6 @@ enum {
 };
 
 static volatile int num_tasks = 0;
-
-static volatile int task_generation = -1;
 
 static struct task task_descriptors[MAX_TASKS];
 
@@ -34,8 +35,7 @@ static uint32_t stacks[MAX_TASKS][STACK_SIZE_WORDS];
 
 void InitTasks( void ) {
   for ( unsigned int i = 0; i < MAX_TASKS; i++ ) {
-    task_descriptors[i].tid = i;
-    task_descriptors[i].generation = task_generation;
+    task_descriptors[i].tid = i - MAX_TASKS;
     task_descriptors[i].stack = stacks[i];
     task_descriptors[i].state = FREE;
     EnqueueQueue( &available_descriptors, &task_descriptors[i] );
@@ -47,15 +47,15 @@ int GetCurrentTid( void ) {
 }
 
 int GetParentTid( void ) {
-  if ( ! current_task->parent ) {
+  if ( current_task->parent_tid == -1 ) {
     return ERR_NO_PARENT;
   }
 
-  if ( current_task->parent->state == ZOMBIE ) {
+  if ( ! IsTaskAlive( current_task->parent_tid ) ) {
     return ERR_PARENT_DESTROYED;
   }
 
-  return current_task->parent->tid;
+  return current_task->parent_tid;
 }
 
 int GetCurrentTaskPriority( void ) {
@@ -89,7 +89,7 @@ int GetTaskPriority( const int tid ) {
     return ERR_GET_PRIORITY_NONEXISTENT_TASK;
   }
 
-  return task_descriptors[tid].state;
+  return task_descriptors[tid % MAX_TASKS].state;
 }
 
 int SetTaskPriority( const int tid, enum Priority to ) {
@@ -110,10 +110,10 @@ int SetTaskPriority( const int tid, enum Priority to ) {
     return ERR_SET_PRIORITY_NONEXISTENT_TASK;
   }
 
-  RemoveStatefulPriorityTaskQueueNode( &scheduler, &task_descriptors[tid] );
+  RemoveStatefulPriorityTaskQueueNode( &scheduler, &task_descriptors[tid % MAX_TASKS] );
   task_descriptors[tid].priority = to;
   if ( tid != current_task->tid ) {
-    EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid] );
+    EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid % MAX_TASKS] );
   }
 
   return RETURN_STATUS_OK;
@@ -151,10 +151,10 @@ int CreateTask( int priority, void ( *code )( void ) ) {
 
   task->next = NULL;
   task->prev = NULL;
-  task->generation = task->generation + 1;
+  task->tid = task->tid + MAX_TASKS;
   task->state = READY;
   task->priority = priority;
-  task->parent = current_task;
+  task->parent_tid = current_task ? current_task->tid : -1;
   task->sp = task->stack + STACK_SIZE_WORDS - NUM_REGS_POPPED; // allow space for 14 registers (word size = 4 bytes) to be popped
   task->spsr = 0x10;
   task->pc = ( long )code;
@@ -163,6 +163,8 @@ int CreateTask( int priority, void ( *code )( void ) ) {
   task->used_user_time = 0;
   task->children.first = NULL;
   task->children.last = NULL;
+  task->siblings.next = NULL;
+  task->siblings.prev = NULL;
 
   if ( current_task ) {
     EnqueueQueue( &current_task->children, &task->siblings );
@@ -192,7 +194,10 @@ void ScheduleAndActivate( void ) {
     current_task->state = READY;
   }
 
-  ScheduleTask( current_task );
+  if ( current_task->state >= 0 ) {
+    ScheduleTask( current_task );
+  }
+
   current_task = GetNextScheduledTask();
 
   current_task->state = ACTIVE;
@@ -226,19 +231,33 @@ void SetCurrentTaskOversizedReturnValue( void *ret, size_t size ) {
 }
 
 void SetTaskReturnValue( const int tid, uint32_t ret ) {
-  *( task_descriptors[tid].sp ) = ret; // TODO: find better way of storing return code?
+  if ( ! IsTaskAlive( tid ) ) {
+    return;
+  }
+
+  *( task_descriptors[tid % MAX_TASKS].sp ) = ret; // TODO: find better way of storing return code?
 }
 
 void SetTaskState( const int tid, enum TaskState to ) {
-  RemoveStatefulPriorityTaskQueueNode( &scheduler, &task_descriptors[tid] );
-  task_descriptors[tid].state = to;
-  if ( tid != current_task->tid ) {
-    EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid] );
+  struct task *t = &task_descriptors[tid % MAX_TASKS];
+  if ( t->tid != tid ) {
+    return;
+  }
+
+  RemoveStatefulPriorityTaskQueueNode( &scheduler, &task_descriptors[tid % MAX_TASKS] );
+  task_descriptors[tid % MAX_TASKS].state = to;
+  if ( tid != current_task->tid && to >= 0 ) {
+    EnqueueStatefulPriorityTaskQueue( &scheduler, &task_descriptors[tid % MAX_TASKS] );
   }
 }
 
 enum TaskState GetTaskState( const int tid ) {
-  return task_descriptors[tid].state;
+  struct task *t = &task_descriptors[tid % MAX_TASKS];
+  if ( t->tid != tid ) {
+    return FREE;
+  }
+
+  return t->state;
 }
 
 void SetCurrentTaskState( enum TaskState to ) {
@@ -250,11 +269,12 @@ enum TaskState GetCurrentTaskState( void ) {
 }
 
 bool IsValidTid( int tid ) {
-  return 0 <= tid && tid < MAX_TASKS;
+  return 0 <= tid && tid <= LONG_MAX;
 }
 
 bool IsTaskAlive( int tid ) {
-  return IsValidTid( tid ) && GetTaskState( tid ) != ZOMBIE && GetTaskState( tid ) != FREE;
+  // ZOMBIE = 0, FREE = -1, DESTROYED = -2
+  return IsValidTid( tid ) && GetTaskState( tid ) > 0;
 }
 
 bool IsValidPriority( int priority ) {
@@ -314,30 +334,39 @@ uint32_t HandleIrq( int32_t intr_code ) {
 }
 
 int DestroyHandler( int tid ) {
-  Debugln( "Destoying (%d)", tid );
+  Debugln( "Destroying (%d)", tid );
 
   if ( ! IsValidTid( tid ) ) {
     Debugln( "Invalid tid, aborting!" );
     return ERR_DESTROY_IMPOSSIBLE_TID;
   }
 
-  if ( ! IsTaskAlive( tid ) ) {
+  struct task *task = &task_descriptors[tid % MAX_TASKS];
+
+  if ( task->tid != tid ) {
     Debugln( "Non-existent tid, aborting!" );
     return ERR_DESTROY_NONEXISTENT_TASK;
   }
 
-  struct task *task = &task_descriptors[tid];
+  /* Remove reference to siblings */
+  struct task *parent = &task_descriptors[task->parent_tid % MAX_TASKS];
+  RemoveQueueNode( &parent->children, &task->siblings );
 
   /* Destroy Children */
-  struct task *child;
-
-  while (( child = ( struct task* )DequeueQueue( &task->children ) )) {
+  void *node;
+  while (( node = DequeueQueue( &task->children ) )) {
+    struct task *child = node  - offsetof( struct task, siblings );
     DestroyHandler( child->tid );
   }
 
   /* Destroy self */
-  SetTaskState( tid, FREE );
-  EnqueueQueue( &available_descriptors, task );
+  if ( task->tid < LONG_MAX - MAX_TASKS ) {
+    SetTaskState( tid, FREE );
+    EnqueueQueue( &available_descriptors, task );
+  }
+  else {
+    SetTaskState( tid, DESTROYED );
+  }
 
   if ( task->awaiting_event_id >= 0 ) {
     DisableInterrupt( task->awaiting_event_id );
@@ -359,7 +388,7 @@ void TasksStatsHandler( struct TasksStats *stats ) {
     for ( enum TaskState state = ZOMBIE; state <= EVENT_BLOCKED; state++ ) {
       struct task *head = ( struct task* )scheduler.states[state].priorities[priority].first;
       while ( head ) {
-        stats->tasks[index].tid = head->tid + MAX_TASKS * head->generation;
+        stats->tasks[index].tid = head->tid;
         stats->tasks[index].priority = head->priority;
         stats->tasks[index].state = head->state;
         stats->tasks[index].num_activates = head->num_activates;
@@ -375,4 +404,14 @@ void TasksStatsHandler( struct TasksStats *stats ) {
   RemoveStatefulPriorityTaskQueueNode( &scheduler, current_task );
 
   stats->num_tasks = index;
+}
+
+void TaskStatsHandler( int tid, struct TaskStats *stats ) {
+  struct task *task = &task_descriptors[tid % MAX_TASKS];
+  stats->tid = task->tid;
+  stats->priority = task->priority;
+  stats->state = task->state;
+  stats->num_activates = task->num_activates;
+  stats->allowed_user_time = task->allowed_user_time;
+  stats->used_user_time = task->used_user_time;
 }

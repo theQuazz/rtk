@@ -11,6 +11,7 @@
 #include "../lib/queue.h"
 
 enum TaskState {
+  DESTROYED = -2,
   FREE = -1,
   ZOMBIE,
   READY,
@@ -36,11 +37,11 @@ enum {
 
 struct task {
   struct queue_node;
-  int tid;
+  long tid;
   int generation;
   enum TaskState state;
   enum Priority priority;
-  struct task *parent;
+  long parent_tid;
   uint32_t *stack;
   uint32_t *sp;
   uint32_t spsr;
@@ -50,8 +51,8 @@ struct task {
   uint32_t last_activate_at;
   unsigned long allowed_user_time;
   unsigned long used_user_time;
-  struct queue_node siblings;
   struct queue children;
+  struct queue_node siblings;
 };
 
 void InitTasks( void );
@@ -102,6 +103,8 @@ uint32_t HandleIrq( int32_t intr_code );
 
 void HandleDestroy( const int tid );
 
+
+void TaskStatsHandler( int tid, struct TaskStats *stats );
 void TasksStatsHandler( struct TasksStats *stats );
 
 #endif

@@ -41,18 +41,18 @@ int SendProxy( int tid, void *msg, int msglen, void *reply, int replylen ) {
   n.reply_buffer = reply;
   n.reply_buffer_size = replylen;
 
-  struct msg_queue_node *node = &nodes[mytid];
+  struct msg_queue_node *node = &nodes[mytid % MAX_TASKS];
 
   memcpy( node, &n, sizeof( n ) );
 
-  EnqueueQueue( &msg_queues[tid], node );
+  EnqueueQueue( &msg_queues[tid % MAX_TASKS], node );
 
   SetCurrentTaskState( RECEIVE_BLOCKED );
 
   if ( GetTaskState( tid ) == SEND_BLOCKED ) {
     Debugln( "Task %d awaiting message, resuming", tid );
 
-    struct msg_queue_node *receiver_node = &nodes[tid];
+    struct msg_queue_node *receiver_node = &nodes[tid % MAX_TASKS];
 
     node->put_tid = receiver_node->put_tid;
     node->receive_buffer = receiver_node->receive_buffer;
@@ -69,7 +69,7 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
 
   const int mytid = GetCurrentTid();
 
-  if ( ! msg_queues[mytid].first ) {
+  if ( ! msg_queues[mytid % MAX_TASKS].first ) {
     Debugln( "No messages in queue, waiting" );
 
     SetCurrentTaskState( SEND_BLOCKED );
@@ -79,12 +79,12 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
     n.receive_buffer = msg;
     n.receive_buffer_size = msglen;
 
-    memcpy( &nodes[mytid], &n, sizeof( n ) );
+    memcpy( &nodes[mytid % MAX_TASKS], &n, sizeof( n ) );
 
     return RETURN_STATUS_OK;
   }
 
-  struct msg_queue_node *n = ( struct msg_queue_node* )( msg_queues[mytid].last );
+  struct msg_queue_node *n = ( struct msg_queue_node* )( msg_queues[mytid % MAX_TASKS].last );
 
   Debugln( "Message available, retrieving (%d)", n->msg_buffer );
 
@@ -96,7 +96,7 @@ int ReceiveProxy( int *tid, void *msg, int msglen ) {
 }
 
 int CompleteReceive( int tid ) {
-  struct msg_queue_node *n = ( struct msg_queue_node* )DequeueQueue( &msg_queues[tid] );
+  struct msg_queue_node *n = ( struct msg_queue_node* )DequeueQueue( &msg_queues[tid % MAX_TASKS] );
 
   *( n->put_tid ) = n->from_tid;
   if ( n->receive_buffer != NULL && n->msg_buffer != NULL ) {
@@ -115,7 +115,7 @@ int CompleteReceive( int tid ) {
 int ReplyProxy( int tid, void *reply, int replylen ) {
   Debugln( "Replying to task %d", tid );
 
-  struct msg_queue_node *n = &nodes[tid];
+  struct msg_queue_node *n = &nodes[tid % MAX_TASKS];
 
   if ( ! IsValidTid( tid ) ) {
     Debugln( "Invalid tid, aborting!" );
