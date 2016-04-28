@@ -14,8 +14,8 @@ void RtkLaunch(void) {
   InitCommunication();
 
   /* Initialize Null & Init Tasks */
-  CreateTask( NULL_PRIORITY, NullProcess );
-  CreateTask( LOW_PRIORITY, Init );
+  CreateTask( NULL_PRIORITY, NullProcess, "NullProcess" );
+  CreateTask( LOW_PRIORITY, Init, "Init" );
 
   /* Kernel Run Loop */
   for ( ;; ) {

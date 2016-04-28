@@ -4,7 +4,7 @@
 #include "task_priority.h"
 
 enum {
-  MAX_TASKS = 1024,
+  MAX_TASKS = 128,
 };
 
 /** @brief Instantiate a task
@@ -21,7 +21,8 @@ enum {
  *  @param code Entry point of the task
  *  @return Tid of new task or CreateError
  */
-int Create( enum Priority priority, void ( *code )() );
+#define Create( priority, code ) Create_( priority, code, #code )
+int Create_( enum Priority priority, void ( *code )(), char *command );
 enum CreateError {
   ERR_INVALID_PRIORITY = -1,
   ERR_UNAVAILABLE_DESCRIPTOR = -2,
@@ -136,6 +137,7 @@ struct TaskStats {
   long num_activates;
   unsigned long allowed_user_time;
   unsigned long used_user_time;
+  char *command;
 };
 void GetTaskStats( int tid, struct TaskStats *container );
 

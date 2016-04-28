@@ -53,6 +53,7 @@ struct task {
   unsigned long used_user_time;
   struct queue children;
   struct queue_node siblings;
+  char *command;
 };
 
 void InitTasks( void );
@@ -79,9 +80,9 @@ void SetCurrentTaskReturnValue( uint32_t ret );
 
 void SaveTaskState( uint32_t spsr, uint32_t *sp, uint32_t pc, uint32_t timer );
 
-int CreateTask( int priority, void ( *code )( void ) );
+int CreateTask( int priority, void ( *code )( void ), char *command );
 
-int CreateTaskSafe( int priority, void ( *code )( void ) );
+int CreateTaskSafe( int priority, void ( *code )( void ), char *command );
 
 void ScheduleAndActivate( void );
 

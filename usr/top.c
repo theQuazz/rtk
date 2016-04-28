@@ -39,14 +39,14 @@ void Top( void ) {
         ( time / 10) % 10
     );
 
-    Print( 0, "+------+----------+-------+-------------+------------+------------+-----------------+-----------------+\r\n" );
-    Print( 0, "| tid  | priority | state | # activates | time given |  time used | %% used of given | %% used of total |\r\n" );
-    Print( 0, "+------+----------+-------+-------------+------------+------------+-----------------+-----------------+\r\n" );
+    Print( 0, "+------+----------+-------+-------------+------------+------------+-----------------+-----------------+----------------------+\r\n" );
+    Print( 0, "| tid  | priority | state | # activates | time given |  time used | %% used of given | %% used of total |              command |\r\n" );
+    Print( 0, "+------+----------+-------+-------------+------------+------------+-----------------+-----------------+----------------------+\r\n" );
 
     for ( unsigned int i = 0; i < stats.num_tasks; i++ ) {
       Print(
           0,
-          "| %4d | %8d | %5d | %11d | %10lu | %10lu | %15d | %15d |\r\n",
+          "| %4d | %8d | %5d | %11d | %10lu | %10lu | %15d | %15d | %20s |\r\n",
           stats.tasks[i].tid,
           stats.tasks[i].priority,
           stats.tasks[i].state,
@@ -54,11 +54,12 @@ void Top( void ) {
           stats.tasks[i].allowed_user_time / 10,
           stats.tasks[i].used_user_time / 10,
           stats.tasks[i].used_user_time / max( stats.tasks[i].allowed_user_time / 100, 100 ),
-          stats.tasks[i].used_user_time / max( time, 1 )
+          stats.tasks[i].used_user_time / max( time, 1 ),
+          stats.tasks[i].command
       );
     }
 
-    Print( 0, "+------+----------+-------+-------------+------------+------------+-----------------+-----------------+" );
+    Print( 0, "+------+----------+-------+-------------+------------+------------+-----------------+-----------------+----------------------+\r\n" );
 
     Delay( 100 );
   }

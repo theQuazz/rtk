@@ -143,7 +143,7 @@ static void ScheduleTask( struct task *task ) {
   EnqueueStatefulPriorityTaskQueue( &scheduler, task );
 }
 
-int CreateTask( int priority, void ( *code )( void ) ) {
+int CreateTask( int priority, void ( *code )( void ), char *command ) {
   struct task *task = ( struct task* )DequeueQueue( &available_descriptors );
   if ( ! task ) {
     return ERR_UNAVAILABLE_DESCRIPTOR;
@@ -161,6 +161,7 @@ int CreateTask( int priority, void ( *code )( void ) ) {
   task->stack[STACK_SIZE_WORDS - 1] = ( uint32_t )Exit; // task initial lr
   task->awaiting_event_id = -1;
   task->used_user_time = 0;
+  task->command = command;
   task->children.first = NULL;
   task->children.last = NULL;
   task->siblings.next = NULL;
@@ -181,12 +182,12 @@ int CreateTask( int priority, void ( *code )( void ) ) {
   return task->tid;
 }
 
-int CreateTaskSafe( int priority, void ( *code )( void ) ) {
+int CreateTaskSafe( int priority, void ( *code )( void ), char *command ) {
   if ( priority < HIGHEST_PRIORITY || LOW_PRIORITY < priority ) {
     return ERR_INVALID_PRIORITY;
   }
 
-  return CreateTask( priority, code );
+  return CreateTask( priority, code, command );
 }
 
 void ScheduleAndActivate( void ) {
@@ -388,14 +389,7 @@ void TasksStatsHandler( struct TasksStats *stats ) {
     for ( enum TaskState state = ZOMBIE; state <= EVENT_BLOCKED; state++ ) {
       struct task *head = ( struct task* )scheduler.states[state].priorities[priority].first;
       while ( head ) {
-        stats->tasks[index].tid = head->tid;
-        stats->tasks[index].priority = head->priority;
-        stats->tasks[index].state = head->state;
-        stats->tasks[index].num_activates = head->num_activates;
-        stats->tasks[index].allowed_user_time = head->allowed_user_time;
-        stats->tasks[index].used_user_time = head->used_user_time;
-        index += 1;
-
+        TaskStatsHandler( head->tid, &stats->tasks[index++] );
         head = ( struct task* )head->next;
       }
     }
@@ -414,4 +408,5 @@ void TaskStatsHandler( int tid, struct TaskStats *stats ) {
   stats->num_activates = task->num_activates;
   stats->allowed_user_time = task->allowed_user_time;
   stats->used_user_time = task->used_user_time;
+  stats->command = task->command;
 }
